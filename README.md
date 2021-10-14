@@ -4,5 +4,9 @@
 ### wimlib-imagex for macOS its a macOS Packages for installing Wimlib without Homebrew.
 - This program will install wimlib-imagex in /usr/local.
 
-### Credit: Special thanks to ➤ [Wimlib](https://wimlib.net/) for Wimlib
+### Credit: 
+- Special thanks to ➤ [Wimlib](https://wimlib.net/) for Wimlib
+- Special thanks to ➤ [Homebrew](https://formulae.brew.sh/formula/wimlib) for Wimlib formulae
+
+
 
