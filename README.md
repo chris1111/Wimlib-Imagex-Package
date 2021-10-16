@@ -9,7 +9,7 @@
 ### Credit: 
 - Special thanks to ➤ [Wimlib](https://wimlib.net/) for Wimlib
 - Special thanks to ➤ [Homebrew](https://formulae.brew.sh/formula/wimlib) for Wimlib formulae
-- Apple for AppleScript and the command line PKGBUILD and PRODUCBUILD
+- Apple for AppleScript and the command line PKGBUILD and PRODUCTBUILD
 
 ### Now you can create Windows 11 USB disk in macOS
 - SIP Security and Gatekeeper must be disable
