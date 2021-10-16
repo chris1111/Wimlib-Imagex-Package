@@ -3,6 +3,8 @@
 
 ### wimlib-imagex for macOS its a macOS Packages for installing Wimlib without Homebrew.
 - This program will install wimlib-imagex in /usr/local.
+- This program will allow you to create a Windows 11 Bootable USB key in macOS
+- You need a USB key of 8 Gig and more and the Windows ISO image download from ➤ [Microsoft](https://www.microsoft.com/en-us/software-download/windows11)
 
 ### Credit: 
 - Special thanks to ➤ [Wimlib](https://wimlib.net/) for Wimlib
