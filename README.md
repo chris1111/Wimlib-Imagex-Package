@@ -9,4 +9,6 @@
 - Special thanks to ➤ [Homebrew](https://formulae.brew.sh/formula/wimlib) for Wimlib formulae
 
 
+### How its work VIDEO: ⬇︎
 
+[![Modular Image Creation](https://user-images.githubusercontent.com/6248794/134072536-7c46b8cc-4d8b-42f9-a28a-3c02734f1f5d.png)]()
