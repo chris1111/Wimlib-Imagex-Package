@@ -9,6 +9,7 @@
 - Special thanks to ➤ [Homebrew](https://formulae.brew.sh/formula/wimlib) for Wimlib formulae
 
 ### Now you can create Windows 11 USB disk in macOS
+- SIP Security and Gatekeeper must be disable
 
 ### How its work VIDEO: ⬇︎
 
