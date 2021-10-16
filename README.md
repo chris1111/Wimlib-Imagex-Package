@@ -10,6 +10,7 @@
 
 ### Now you can create Windows 11 USB disk in macOS
 - SIP Security and Gatekeeper must be disable
+- WINUSB is bootable only in UEFI ( 🚫  Not working in Legacy booting )
 
 ### How its work VIDEO: ⬇︎
 
