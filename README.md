@@ -2,6 +2,10 @@
 - Wimlib-Imagex for macOS, working in macOS Big Sur 11 and macOS Monterey 12
 - Working for real Mac and Hackintosh
 
+
+<img width="256" alt="1" src="https://user-images.githubusercontent.com/6248794/137704824-92f05170-25b3-4f6b-a013-013b46ecf53e.png">
+
+
 ### wimlib-imagex for macOS its a macOS Packages for installing Wimlib without Homebrew.
 - This program will install wimlib-imagex in /usr/local.
 - This program will allow you to create a Windows 11 Bootable USB key in macOS
@@ -10,7 +14,7 @@
 ### Credit: 
 - Special thanks to ➤ [Wimlib](https://wimlib.net/) for Wimlib
 - Special thanks to ➤ [Homebrew](https://formulae.brew.sh/formula/wimlib) for Wimlib formulae
-- Apple for AppleScript and the command line PKGBUILD and PRODUCTBUILD
+- Apple for AppleScript and the command line Pkgbuild, Productbuild, osacompile
 
 ### Now you can create Windows 11 USB disk in macOS
 - SIP Security and Gatekeeper must be disable
