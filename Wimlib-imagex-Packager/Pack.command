@@ -55,16 +55,12 @@ Build Create USB WIN 11.app  with osacompile"
 Sleep 3
 
 # see if the app is already exist
-if [ -d "${3}./Create USB WIN 11.app" ]; then
-	rm -rf "${3}./Create USB WIN 11.app"
-fi
+# Remove app
+rm -rf "$APP_NAME"
 
 Sleep 2
 # Create the dir structure
 /usr/bin/osacompile -o "$APP_NAME" "$SOURCE_SCRIPT"
-
-# Remove app
-rm -rf BUILD/"$APP_NAME"
 
 
 # Copy applet
@@ -73,11 +69,15 @@ cp -rp ./Sources/Resources/applet.icns "$APP_NAME"/Contents/Resources
 # Copy Helper
 cp -rp ./Sources/Resources/Scripts/Wimlib-Helper "$APP_NAME"/Contents/Resources/Scripts
 
+# Zip app
 Sleep 1
-./Sources/Resources/icon.py ./Sources/Resources/applet.icns "$APP_NAME"
-
+zip -r "$APP_NAME".zip "$APP_NAME"
+Sleep 1
+rm -rf "$APP_NAME"
+unzip "$APP_NAME".zip
+Sleep 1
+rm -rf "$APP_NAME".zip
 echo " "
-
 echo "
 = = = = = = = = = = = = = = = = = = = = = = = = =
 Create USB WIN 11.app ➤  Done"
