@@ -3,7 +3,8 @@
 - Working for real Mac and Hackintosh
 
 
-<img width="256" alt="1" src="https://user-images.githubusercontent.com/6248794/137704824-92f05170-25b3-4f6b-a013-013b46ecf53e.png">
+<img width="256" alt="1" src="https://user-images.githubusercontent.com/6248794/154169339-5733975b-b340-43a1-8ff4-82c847420fbb.png">
+
 
 
 ### wimlib-imagex for macOS its a macOS Packages for installing Wimlib without Homebrew.
