@@ -3,7 +3,7 @@
 - Working for real Mac and Hackintosh
 
 
-<img width="256" alt="1" src="https://user-images.githubusercontent.com/6248794/154169339-5733975b-b340-43a1-8ff4-82c847420fbb.png">
+<img width="256" alt="1" src="https://user-images.githubusercontent.com/6248794/154169803-7b649736-d0c0-4577-ab93-00dda35b09ea.png">
 
 
 
