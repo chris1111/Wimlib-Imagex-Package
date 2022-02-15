@@ -54,7 +54,7 @@ echo "
 Build Create USB WIN 11.app  with osacompile"
 Sleep 3
 # rename the main script
-mv "Create USB WIN 11.scpt" $SOURCE_SCRIPT
+mv ./Sources/Resources/"Create USB WIN 11.scpt" ./Sources/Resources/"$SOURCE_SCRIPT"
 
 # see if the app is already exist
 # Remove app
