@@ -6,6 +6,8 @@
 <img width="256" alt="1" src="https://user-images.githubusercontent.com/6248794/154169803-7b649736-d0c0-4577-ab93-00dda35b09ea.png">
 
 
+### Download ➤ [Release V2](https://github.com/chris1111/Wimlib-Imagex-Package/releases/tag/V2)
+
 
 ### wimlib-imagex for macOS its a macOS Packages for installing Wimlib without Homebrew.
 - This program will install wimlib-imagex in /usr/local.
