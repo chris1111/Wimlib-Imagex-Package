@@ -73,7 +73,11 @@ set progress completed steps to 5
 set progress additional description to "
 Wimlib Split install.wim ➤ Done!"
 delay 5
+tell application "Create USB WIN 11"
+	activate
+end tell
+
 display alert "
 **************************
 Create Windows 11 USB ➤ Done!
-**************************" buttons {"OK"} default button 1 giving up after 10
+**************************" buttons {"OK"} default button 1 giving up after 5
