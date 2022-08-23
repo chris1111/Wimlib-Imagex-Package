@@ -1,6 +1,7 @@
 # Wimlib-Imagex-Package
 - Wimlib-Imagex for macOS, working in macOS Big Sur 11 and macOS Monterey 12
 - Working for real Mac and Hackintosh
+### Warning: Only works from macOS Big Sur 11 and above
 
 
 <img width="256" alt="1" src="https://user-images.githubusercontent.com/6248794/154169803-7b649736-d0c0-4577-ab93-00dda35b09ea.png">
