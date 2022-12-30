@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: wimlib
+Description: Library to extract, create, modify, and mount Windows Imaging (WIM) files
+URL:  https://wimlib.net
+Version: @VERSION@
+Libs: -L${libdir} -lwim
+Requires.private: @PKGCONFIG_PRIVATE_REQUIRES@
+Libs.private: @PKGCONFIG_PRIVATE_LIBS@
+Cflags: -I${includedir}

@@ -1,0 +1,13 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: wimlib
+Description: Library to extract, create, modify, and mount Windows Imaging (WIM) files
+URL:  https://wimlib.net
+Version: 1.13.6
+Libs: -L${libdir} -lwim
+Requires.private:  libxml-2.0
+Libs.private: 
+Cflags: -I${includedir}

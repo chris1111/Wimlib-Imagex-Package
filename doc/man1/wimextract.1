@@ -1,0 +1,235 @@
+.TH WIMEXTRACT "1" "September 2022" "wimlib 1.13.6" "User Commands"
+.SH NAME
+wimextract \- Extract files from a WIM image
+.SH SYNOPSIS
+\fBwimextract\fR \fIWIMFILE\fR \fIIMAGE\fR [(\fIPATH\fR | @\fILISTFILE\fR)...]  [\fIOPTION\fR...]
+.SH DESCRIPTION
+\fBwimextract\fR, or equivalently \fBwimlib-imagex extract\fR, extracts one or
+more files or directory trees from the specified \fIIMAGE\fR contained in the
+Windows Imaging (WIM) archive \fIWIMFILE\fR.
+.PP
+\fBwimextract\fR is intended for extracting only a subset of a WIM image.  If
+you want to extract or "apply" a full WIM image to a directory or NTFS volume,
+use \fBwimapply\fR(1) instead.
+.PP
+\fIIMAGE\fR specifies the image in \fIWIMFILE\fR from which to extract the files
+or directory trees.  It may be the 1-based index of an image or the name of an
+image.  It may be omitted if \fIWIMFILE\fR contains only one image.  You can use
+\fBwiminfo\fR(1) to list the images contained in \fIWIMFILE\fR.
+.PP
+If no additional arguments are given, the entire WIM image is extracted.
+Otherwise, each additional argument is interpreted as a \fIPATH\fR if it does
+not begin with the '@' character, or a \fILISTFILE\fR if it does.  Each
+\fIPATH\fR specifies a file or directory tree within the WIM image to extract,
+whereas each \fILISTFILE\fR specifies a file that itself contains a list of
+paths to extract.  If a \fILISTFILE\fR is "-" (i.e. the whole argument is "@-"),
+then the listfile is read from standard input.  See \fBPATHS AND LISTFILES\fR
+for more details.
+.PP
+By default, files and directories are extracted to the current directory.  Use
+\fB--dest-dir\fR to select a different destination directory.  Alternatively,
+use \fB--to-stdout\fR to extract a file to standard output to pipe into another
+program.
+.PP
+A file or directory extracted from a \fIPATH\fR argument is by default extracted
+directly into the destination directory, whereas a file or directory extracted
+from a \fILISTFILE\fR argument is by default extracted into the destination
+directory in such a way that the archive's directory structure is
+preserved.  Use \fB--preserve-dir-structure\fR to always get the latter
+behavior.
+.PP
+\fBwimextract\fR supports extracting files and directory trees from stand-alone
+WIMs as well as split WIMs.  See \fBSPLIT WIMS\fR.
+.SH PATHS AND LISTFILES
+Each path, including those on the command line and those in listfiles, must be
+specified as an absolute path starting from the root of the WIM image, like
+those output by \fBwimdir\fR(1).  However, path separators may be either forward
+or backward slashes, and the leading slash is optional.
+.PP
+On Windows, by default paths are treated case-insensitively, whereas on
+UNIX-like systems, by default paths are treated case-sensitively.  In either
+case, the default behavior may be overridden through the
+\fBWIMLIB_IMAGEX_IGNORE_CASE\fR environmental variable, as documented in
+\fBwimlib-imagex\fR(1).
+.PP
+By default, each path may contain the wildcard characters '?' and '*'.  The '?'
+character matches any non-path-separator character, whereas the '*' character
+matches zero or more non-path-separator characters.  Consequently, a single
+wildcard path, or "glob", may expand to multiple actual files or directories.
+Use the \fB--no-globs\fR option to disable wildcard matching and search for each
+path literally.
+.PP
+Each \fILISTFILE\fR must be a text file (UTF-8 or UTF-16LE encoded; plain ASCII
+is also fine) that
+contains a list of paths to extract, one per line.  Wildcard characters are
+allowed by default.  The following demonstrates an example listfile:
+.PP
+.RS
+.nf
+
+; This is a comment (begins with semicolon)
+# This is also a comment (begins with number sign)
+/Users
+/Windows/explorer.exe
+/Windows/System32/en-US/*
+
+; Both forward and backslashes are valid.
+; It's not necessary to quote paths containing internal spaces.
+\\Program Files\\A*
+
+; Leading and trailing whitespace is ignored
+    \\Windows\\notepad*
+
+.SH SPLIT WIMS
+You may use \fBwimextract\fR to extract files or directory trees from a split
+WIM.  This uses the \fB--refs\fR="\fIGLOB\fR" option in the same way as in other
+commands such as \fBwimapply\fR.  See \fBwimapply\fR(1) for more details.
+.SH OPTIONS
+.TP 6
+\fB--check\fR
+Before extracting the files, verify the integrity of \fIWIMFILE\fR if it
+contains extra integrity information.
+.TP
+\fB--ref\fR="\fIGLOB\fR"
+File glob of additional WIMs or split WIM parts to reference resources from.
+See \fBSPLIT_WIMS\fR.  Note: \fIGLOB\fR is listed in quotes because it is
+interpreted by \fBwimextract\fR and may need to be quoted to protect against
+shell expansion.
+.TP
+\fB--dest-dir\fR=\fIDIR\fR
+Extract the files and directories to the directory \fIDIR\fR instead of to the
+current working directory.
+.TP
+\fB--to-stdout\fR
+Extract the files to standard output instead of to the filesystem.  This can
+only be provided if all the specified paths are to regular files (not
+directories or reparse points).  If present, named data streams are not
+extracted.
+.TP
+\fB--unix-data\fR
+See the documentation for this option to \fBwimapply\fR(1).
+.TP
+\fB--no-acls\fR
+See the documentation for this option to \fBwimapply\fR(1).
+.TP
+\fB--strict-acls\fR
+See the documentation for this option to \fBwimapply\fR(1).
+.TP
+\fB--no-attributes\fR
+See the documentation for this option to \fBwimapply\fR(1).
+.TP
+\fB--include-invalid-names\fR
+See the documentation for this option to \fBwimapply\fR(1).
+.TP
+\fB--no-globs\fR
+Do not recognize wildcard characters in paths.  Each path will be searched for
+literally.  In addition, if case insensitivity is enabled, do not allow a single
+path to match multiple files with the same case-insensitive name but different
+case-sensitive names.
+.IP
+\fB--no-wildcards\fR is also accepted as an alias for this option.
+.TP
+\fB--nullglob\fR
+If a glob does not match any files, ignore it and print a warning instead of
+failing with an error.  In other words, this option allows a glob to
+successfully match zero files.
+.IP
+This option also affects paths that do not contain wildcard characters, since
+such paths are still considered globs unless \fB--no-globs\fR is enabled.  If
+case-insensitivity is enabled, such a glob could match multiple files with the
+same case-insensitive name but different case-sensitive names, whereas a
+non-glob path (with \fB--no-globs\fR) can match at most one file.
+.TP
+\fB--preserve-dir-structure\fR
+When extracting paths, preserve the archive directory structure instead of
+extracting the file or directory tree named by each path directly to the
+destination directory.  Note: \fB--preserve-dir-structure\fR is already the
+default behavior for paths in listfiles, but not paths directly specified on the
+command line.
+.TP
+\fB--wimboot\fR
+See the documentation for this option to \fBwimapply\fR(1).
+.TP
+\fB--compact\fR=\fIFORMAT\fR
+See the documentation for this option to \fBwimapply\fR(1).
+.TP
+\fB--recover-data\fR
+See the documentation for this option to \fBwimapply\fR(1).
+.SH NOTES
+See \fBwimapply\fR(1) for information about what data and metadata are extracted
+on UNIX-like systems versus on Windows.
+.PP
+Reparse-point fixups (a.k.a. changing absolute symbolic links and junctions to
+point within the extraction location) are never done by \fBwimextract\fR.
+Use \fBwimapply\fR if you want this behavior.
+.PP
+Unlike \fBwimapply\fR, \fBwimextract\fR does not support extracting files
+directly to an NTFS volume using libntfs-3g.
+.SH EXAMPLES
+Extract a file from the first image in "boot.wim" to the current directory:
+.RS
+.PP
+wimextract boot.wim 1 /Windows/System32/notepad.exe
+.RE
+.PP
+Extract a file from the first image in "boot.wim" to standard output:
+.RS
+.PP
+wimextract boot.wim 1 /Windows/System32/notepad.exe --to-stdout
+.RE
+.PP
+Extract a file from the first image in "boot.wim" to the specified directory:
+.RS
+.PP
+wimextract boot.wim 1 /Windows/System32/notepad.exe \\
+.br
+.RS
+--dest-dir=somedir
+.RE
+.RE
+.PP
+Extract the "sources" directory from the first image in "boot.wim" to the
+current directory:
+.RS
+.PP
+wimextract boot.wim 1 /sources
+.RE
+.PP
+Extract multiple files and directories in one command:
+.RS
+.PP
+wimextract boot.wim 1 /Windows/Fonts \\
+.br
+.RS
+/sources /Windows/System32/cmd.exe
+.RE
+.RE
+.PP
+Extract many files to the current directory using a wildcard pattern:
+.RS
+.PP
+wimextract install.wim 1 "/Windows/Fonts/*.ttf"
+.RE
+.PP
+Extract files using a list file:
+.RS
+.PP
+wimextract install.wim 1 @files.txt
+.RE
+.PP
+ ...  where files.txt could be something like:
+.PP
+.RS
+.RS
+.nf
+Windows\\System32\\*.*
+Windows\\System32\\??-??\\*.*
+Windows\\System32\\en-US\\*.*
+.RE
+.RE
+.fi
+.SH SEE ALSO
+.BR wimlib-imagex (1)
+.BR wimapply (1)
+.BR wimdir (1)
+.BR wiminfo (1)

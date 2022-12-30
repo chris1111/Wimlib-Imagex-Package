@@ -1,0 +1,478 @@
+#!/usr/bin/env bash
+
+# This script does some sanity testing of the 'wimlib-imagex' program.  It by no
+# means tests every aspect of wimlib comprehensively.
+
+set -e
+cd tests
+srcdir="${srcdir:-.}/.."
+srcdir="$(cd $srcdir; pwd)"
+. "$srcdir/tests/test_utils.sh"
+
+TEST_SUBDIR=tmpdir_test-imagex
+
+# Execute the tests in a subdirectory to avoid conflicts with concurrent tests
+default_cleanup
+mkdir $TEST_SUBDIR
+cd $TEST_SUBDIR
+
+# Make test directory
+mkdir dir
+cp $srcdir/src/*.c dir
+mkdir dir/subdir
+echo 'hello' > dir/subdir/hello
+echo 'hello' > dir/subdir/hello2
+ln dir/subdir/hello dir/subdir/hellolink
+echo -n > dir/subdir/empty_file
+ln -s hello dir/subdir/rel_symlink
+
+mkdir dir2
+echo 'testing' > dir2/file
+dd if=/dev/zero of=dir2/zeroes bs=4096 count=5
+
+# Capturing and applying WIM with None, LZX, and XPRESS compression
+
+for comp_type in None LZX XPRESS; do
+	echo "Testing capture and application of $comp_type-compressed WIM"
+	if ! wimcapture dir dir.wim --compress=$comp_type; then
+		error "'wimcapture' failed"
+	fi
+	if ! wimapply dir.wim tmp; then
+		error "'wimapply' failed"
+	fi
+	if ! test `wim_ctype dir.wim` = "$comp_type"; then
+		error "'wiminfo' didn't report the compression type correctly"
+	fi
+	if ! diff -q -r dir tmp; then
+		error "Recursive diff of extracted directory with original failed"
+	fi
+	if ! test `get_link_count tmp/subdir/hello` = 2; then
+		error "Incorrect number of hard links in extracted file"
+	fi
+	if ! test `get_inode_number tmp/subdir/hello` != `get_inode_number tmp/subdir/hello2`; then
+		error "Expected different inode numbers in files not hard-linked"
+	fi
+	if ! test "`get_inode_number tmp/subdir/hello`" = "`get_inode_number tmp/subdir/hellolink`"; then
+		error "Expected same inode numbers in hard-linked files"
+	fi
+	if ! test -L tmp/subdir/rel_symlink; then
+		error "Symlink not extracted correctly"
+	fi
+	if ! test "`readlink tmp/subdir/rel_symlink`" = "hello"; then
+		error "Symlink target not correct"
+	fi
+
+	rm -rf dir.wim tmp
+done
+
+# Test wimappend --create
+rm -f dir.wim
+if wimappend dir dir.wim; then
+	error "wimappend to nonexisting file unexpectedly succeeded"
+fi
+if ! wimappend dir dir.wim --create; then
+	error "wimappend --create to nonexisting file failed"
+fi
+if ! wimappend dir dir.wim --create; then
+	error "wimappend --create to existing file failed"
+fi
+if ! test "`wiminfo dir.wim | grep 'Image Count' | awk '{print $3}'`" = 2; then
+	error "Incorrect WIM image count after wimappend --create"
+fi
+
+# Capturing and modifying name, description, and bootable flag
+
+echo "Testing capture of WIM with default name and description"
+wimcapture dir dir.wim
+if ! test "`wiminfo dir.wim | grep Name | awk '{print $2}'`" = "dir"; then
+	error "WIM name not set correctly"
+fi
+if ! test "`wiminfo dir.wim | grep Description | awk '{print $2}'`" = ""; then
+	error "WIM description not set correctly"
+fi
+
+echo "Testing capture of WIM with default boot flag"
+wimcapture dir dir.wim
+if ! test "`wiminfo dir.wim | grep '^Boot Index' | awk '{print $3}'`" = "0"; then
+	error "WIM boot flag not set correctly"
+fi
+
+echo "Testing changing image bootable flag"
+if ! wiminfo dir.wim 1 --boot; then
+	error "Failed to change bootable image"
+fi
+if ! test "`wiminfo dir.wim | grep '^Boot Index' | awk '{print $3}'`" = "1"; then
+	error "Bootable image not changed correctly"
+fi
+echo "Testing changing image bootable flag"
+if ! wiminfo dir.wim 0 --boot; then
+	error "Failed to reset bootable image"
+fi
+if ! test "`wiminfo dir.wim | grep '^Boot Index' | awk '{print $3}'`" = "0"; then
+	error "Bootable image not reset correctly"
+fi
+echo "Testing changing image bootable flag to invalid image (this should generate errors)"
+if wiminfo dir.wim 2 --boot; then
+	error "Succeeded in changing bootable image to invalid number"
+fi
+if ! test "`wiminfo dir.wim | grep '^Boot Index' | awk '{print $3}'`" = "0"; then
+	error "Boot flag was changed even though the change command was supposed to fail"
+fi
+rm -rf dir.wim tmp
+
+echo "Testing capture of WIM with name and description"
+if ! wimcapture dir dir.wim "myname" "mydesc"; then
+	error "Failed to capture WIM with specified name and description"
+fi
+if ! test "`wiminfo dir.wim | grep Name | awk '{print $2}'`" = "myname"; then
+	error "WIM name not set correctly"
+fi
+if ! test "`wiminfo dir.wim | grep Description | awk '{print $2}'`" = "mydesc"; then
+	error "WIM name not set correctly"
+fi
+echo "Testing printing WIM lookup table"
+if ! wiminfo --lookup-table dir.wim > /dev/null; then
+	error "Failed to print WIM lookup table"
+fi
+echo "Testing printing WIM header"
+if ! wiminfo --header dir.wim > /dev/null; then
+	error "Failed to print WIM header"
+fi
+echo "Testing printing WIM XML info"
+if ! wiminfo --xml dir.wim > /dev/null; then
+	error "Failed to print WIM XML data"
+fi
+echo "Testing extracting WIM XML info"
+if ! wiminfo --extract-xml=dir.xml dir.wim; then
+	error "Failed to extract WIM XML data"
+fi
+echo "Testing printing WIM metadata"
+if ! wimdir --detailed dir.wim > /dev/null; then
+	error "Failed to print WIM metadata"
+fi
+rm -rf dir.wim tmp dir.xml
+
+echo "Testing capture of bootable WIM"
+if ! wimcapture dir dir.wim --boot; then
+	error "Failed to capture bootable WIM"
+fi
+if ! test "`wiminfo dir.wim | grep '^Boot Index' | awk '{print $3}'`" = "1"; then
+	error "Boot flag on bootable WIM not set correctly"
+fi
+rm -rf dir.wim tmp
+
+# Integrity table
+
+echo "Testing capture of WIM with integrity table"
+if ! wimcapture dir dir.wim --check; then
+	error "Failed to capture WIM with integrity table"
+fi
+if ! wiminfo dir.wim | grep -q Integrity; then
+	error "Integrity table on WIM not made"
+fi
+if ! wimapply --check dir.wim tmp; then
+	error "Integrity table on WIM not made correctly"
+fi
+if ! diff -q -r dir tmp; then
+	error "Recursive diff of applied WIM with original directory failed"
+fi
+rm -rf dir.wim tmp
+
+# Appending and deleting images
+
+echo "Testing appending WIM image"
+wimcapture dir dir.wim
+if ! wimappend dir2 dir.wim; then
+	error "Appending WIM image failed"
+fi
+if ! test "`wiminfo dir.wim | grep 'Image Count' | awk '{print $3}'`" = 2; then
+	error "WIM image count not correct"
+fi
+
+echo "Testing appending WIM image with existing name (this should generate errors)"
+if wimappend dir2 dir.wim "dir"; then
+	error "Adding duplicate image name didn't fail"
+fi
+echo "Testing appending WIM image with new name"
+if ! wimappend dir2 dir.wim "newname"; then
+	error "Appending WIM image failed"
+fi
+echo "Testing appending WIM image with integrity check"
+if ! wimappend dir2 dir.wim "newname2" --check; then
+	error "Appending WIM image failed"
+fi
+if ! wiminfo dir.wim | grep -q Integrity; then
+	error "Integrity table not set correctly on image append"
+fi
+echo "Testing appending WIM image with no integrity check"
+if ! wimappend dir2 dir.wim "newname3" --nocheck; then
+	error "Appending WIM image failed"
+fi
+if wiminfo dir.wim | grep -q Integrity; then
+	error "WIM integrity table not removed"
+fi
+# 5 images at this point
+if ! test "`wiminfo dir.wim | grep 'Image Count' | awk '{print $3}'`" = 5; then
+	error "WIM does not contain the expected 5 images"
+fi
+echo "Testing deleting first WIM image"
+if ! wimdelete dir.wim 1; then
+	error "Failed to delete WIM image"
+fi
+if ! test "`wiminfo dir.wim | grep 'Image Count' | awk '{print $3}'`" = 4; then
+	error "WIM image not deleted correctly"
+fi
+echo "Testing deleting last WIM image"
+if ! wimdelete dir.wim 4; then
+	error "Failed to delete WIM image"
+fi
+if ! test "`wiminfo dir.wim | grep 'Image Count' | awk '{print $3}'`" = 3; then
+	error "WIM image not deleted correctly"
+fi
+echo "Testing deleting invalid WIM image (this should generate errors)"
+if wimdelete dir.wim 4; then
+	error "Expected to fail to delete non-existent WIM image"
+fi
+if ! test "`wiminfo dir.wim | grep 'Image Count' | awk '{print $3}'`" = 3; then
+	error "Image count changed even though we intentionally failed to delete an image"
+fi
+echo "Testing deleting all WIM images"
+if ! wimdelete dir.wim all; then
+	error "Failed to delete all images from WIM"
+fi
+if ! test "`wiminfo dir.wim | grep 'Image Count' | awk '{print $3}'`" = 0; then
+	error "Couldn't delete all WIM images correctly"
+fi
+echo "Testing appending directory to empty WIM and making it bootable"
+if ! wimappend dir dir.wim "myname" "mydesc" --check --boot; then
+	error "Couldn't append named, described, bootable image to empty WIM with integrity check"
+fi
+if ! wiminfo dir.wim | grep -q Integrity; then
+	error "Integrity check not found"
+fi
+if ! test "`wiminfo dir.wim | grep '^Boot Index' | awk '{print $3}'`" = "1"; then
+	error "Bootable image not set correctly"
+fi
+echo "Testing appending non-directory (should generate errors)"
+if wimappend dir.wim dir.wim; then
+	error "Incorrectly succeeded to append non-directory to WIM"
+fi
+echo "Testing appending non-existent file (should generate errors)"
+if wimappend SOME_NONEXISTENT_FILE dir.wim; then
+	error "Incorrectly succeeded to append non-existent file to WIM"
+fi
+if [ `id -u` != 0 ]; then
+	echo "Testing appending directory containing unreadable file (should generate errors)"
+	mkdir -p dir3
+	echo 1 > dir3/file
+	chmod -r dir3/file
+	if wimappend dir3 dir.wim; then
+		error "Incorrectly succeeded in capturing directory with unreadable file"
+	fi
+fi
+rm -rf dir3 dir.wim
+
+# Applying multiple images, applying with hardlinks/symlinks
+
+echo "Testing application of multiple images"
+if ! wimcapture dir dir.wim; then
+	error "Failed to prepare test WIM"
+fi
+if ! wimappend dir dir.wim "myname"; then
+	error "Failed to append image to test WIM"
+fi
+if ! wimapply dir.wim all tmp; then
+	error "Applying multiple images failed"
+fi
+if ! diff -q -r tmp/dir tmp/myname || ! diff -q -r dir tmp/dir; then
+	error "Recursive diff of applied WIM with original directory failed"
+fi
+if test "`get_link_count tmp/dir/write.c`" != 1; then
+	error "Incorrect link count on extracted file"
+fi
+if test "`get_link_count tmp/myname/write.c`" != 1; then
+	error "Incorrect link count on extracted file"
+fi
+if test "`get_inode_number tmp/myname/write.c`" = "`get_inode_number tmp/dir/write.c`"; then
+	error "Incorrect inode number"
+fi
+rm -rf tmp
+
+echo "Testing application of single image containing identical files"
+if ! wimapply dir.wim 1 tmp; then
+	error "Failed to apply WIM"
+fi
+if test "`get_link_count tmp/subdir/hello`" != 2; then
+	error "Incorrect link count on extracted file"
+fi
+if test "`get_link_count tmp/subdir/hello2`" != 1; then
+	error "Incorrect link count on extracted file"
+fi
+if test "`get_inode_number tmp/subdir/hello`" = "`get_inode_number tmp/subdir/hello2`"; then
+	error "Inode numbers on non-hard-linked files are the same"
+fi
+if test "`get_inode_number tmp/subdir/hello`" != "`get_inode_number tmp/subdir/hellolink`"; then
+	error "Inode numbers on hard-linked files are different"
+fi
+rm -rf tmp
+
+# wimsplit, wimjoin
+
+echo "Creating random files to test WIM splitting on"
+mkdir tmp
+for ((i = 0; i < 100; i++)); do
+	dd if=/dev/urandom of=tmp/file$i bs=4096 count=10 &> /dev/null
+done
+for flag in "--compress=none" "--compress=maximum" "--compress=fast"; do
+	echo "Using flag $flag"
+	if ! wimcapture tmp tmp.wim $flag; then
+		error "Failed to capture test WIM"
+	fi
+	echo "Splitting WIM into 1 MiB chunks"
+	if ! wimsplit tmp.wim tmp.swm 1; then
+		error "Failed to split WIM"
+	fi
+	echo "Verifying the split WIMs (some errors expected)"
+	if test "`wiminfo tmp.swm | grep 'Part Number' | awk '{print $3}'`" != "1/4"; then
+		error "Part number of split WIM not correct"
+	fi
+	if ! wimdir tmp.swm > /dev/null; then
+		error "Failed to list files in split WIM"
+	fi
+	if ! test -e tmp2.swm; then
+		error "Could not find split-WIM part 2"
+	fi
+	if wimdir tmp2.swm > /dev/null; then
+		error "Listed files in part 2 of split WIM (this should have failed)"
+	fi
+
+	# Unsupported, should fail
+	if wiminfo tmp.swm --boot 1; then
+		error "Should not have been able to change boot index of split WIM"
+	fi
+	echo "Joining the split WIMs and applying the result"
+	if ! wimjoin tmp2.wim tmp*.wim; then
+		error "Failed to join split WIMs"
+	fi
+	if ! wimapply tmp2.wim tmp2; then
+		error "Failed to apply joined split WIM"
+	fi
+	if ! wimapply tmp.wim tmp3; then
+		error "Failed to apply test WIM"
+	fi
+	if ! diff -q -r tmp tmp2 || ! diff -q -r tmp tmp3; then
+		error "Recursive diff of applied joined split WIM with original directory failed"
+	fi
+	rm -f *.wim *.swm
+	rm -rf tmp2 tmp3
+done
+rm -rf tmp
+
+# wimexport
+echo "Testing export of single image to new WIM"
+if ! wimcapture dir dir.wim; then
+	error "Failed to capture test WIM"
+fi
+if ! wimappend dir2 dir.wim; then
+	error "Failed to append image to test WIM"
+fi
+if ! wimexport dir.wim dir new.wim; then
+	error "Failed to export single image to new WIM"
+fi
+if test "`wiminfo new.wim | grep 'Image Count' | awk '{print $3}'`" != 1; then
+	error "Exporting single image to new WIM wasn't done correctly"
+fi
+echo "Testing export of single image to existing WIM"
+if ! wimexport dir.wim dir2 new.wim; then
+	error "Failed to export single image to existing WIM"
+fi
+if test "`wiminfo new.wim | grep 'Image Count' | awk '{print $3}'`" != 2; then
+	error "Exporting single image to existing WIM wasn't done correctly"
+fi
+echo "Testing export of single image to existing WIM using wrong compression type"
+if wimexport dir.wim dir2 new.wim newname --compress=xpress; then
+	error "Successfully exported image using wrong compression type"
+fi
+rm -f new.wim
+echo "Testing export of multiple images to new WIM"
+if ! wimexport dir.wim all new.wim; then
+	error "Failed to export multiple images to new WIM"
+fi
+if test "`wiminfo new.wim | grep 'Image Count' | awk '{print $3}'`" != 2; then
+	error "Exporting multiple images to new WIM wasn't done correctly"
+fi
+if ! wimcapture dir2 new.wim newname; then
+	error "Failed to capture test WIM"
+fi
+echo "Testing export of multiple images to existing WIM"
+if ! wimexport dir.wim all new.wim; then
+	error "Failed to export multiple images to existing WIM"
+fi
+echo "Testing export of multiple images to existing WIM with --boot"
+if ! wimcapture dir2 new.wim newname; then
+	error "Failed to capture test WIM"
+fi
+if ! wiminfo dir.wim --boot 1; then
+	error "Failed to set boot index on test WIM"
+fi
+if ! wimexport dir.wim all new.wim --boot; then
+	error "Failed to export multiple images to existing WIM with bootable image"
+fi
+echo "Testing export of multiple images to existing WIM with --boot, but no bootable image (errors expected)"
+if ! wimcapture dir2 new.wim newname; then
+	error "Failed to capture test WIM"
+fi
+if ! wiminfo dir.wim --boot 0; then
+	error "Failed to clear boot index on test WIM"
+fi
+if wimexport dir.wim all new.wim --boot; then
+	error "Successfully exported multiple images with --boot but with no bootable images"
+fi
+
+# Test exporting an image to another WIM, then applying it.
+# We try with 5 different combinations of compression types to make sure we go
+# through all paths in the resource-handling code.
+for i in 1 2 3 4 5; do
+	case $i in
+	1)
+		cflag1="--compress=none";
+		cflag2="--compress=none";
+		;;
+	2)
+		cflag1="--compress=xpress";
+		cflag2="--compress=xpress";
+		;;
+	3)
+		cflag1="--compress=xpress"
+		cflag2="--compress=lzx"
+		;;
+	4)
+		cflag1="--compress=none"
+		cflag2="--compress=xpress"
+		;;
+	5)
+		cflag1="--compress=xpress"
+		cflag2="--compress=none"
+		;;
+	esac
+	echo "Testing exporting then applying an image (\"$cflag1\" => \"$cflag2\")"
+	rm -rf dir.wim new.wim tmp tmp2
+	wimcapture dir dir.wim $cflag1
+	wimcapture dir2 dir2.wim $cflag2
+	wimexport dir.wim dir dir2.wim
+	wimapply dir.wim dir tmp
+	if ! wimapply dir2.wim dir tmp2; then
+		error "Failed to apply image that was exported to a WIM"
+	fi
+	if ! diff -r tmp tmp2; then
+		error "Image that was exported to a WIM was not applied correctly"
+	fi
+done
+
+echo "**********************************************************"
+echo "             Basic wimlib-imagex tests passed             "
+echo "**********************************************************"
+
+# Leave test subdirectory and cleanup
+cd ..
+default_cleanup

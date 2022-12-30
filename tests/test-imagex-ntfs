@@ -1,0 +1,277 @@
+#!/usr/bin/env bash
+
+# This script does some sanity testing of the 'imagex' program, specifically
+# checking the NTFS capture and apply features.
+#
+# This test will fail if wimlib was compiled with --without-ntfs-3g.
+#
+# Please note that cleanup is not done if a test fails, and NTFS volumes may
+# remain mounted.
+
+set -e
+cd tests
+srcdir="${srcdir:-.}/.."
+srcdir="$(cd $srcdir; pwd)"
+. "$srcdir/tests/test_utils.sh"
+
+TEST_SUBDIR=tmpdir_test-imagex-ntfs
+
+__do_unmount() {
+	for ((i = 0; i < 10; i++)); do
+		if fusermount -z -u $1; then
+			return 0
+		else
+			sleep 1
+		fi
+	done
+	error "Failed to unmount \"$1\""
+}
+
+do_unmount() {
+	if mountpoint $1 &> /dev/null; then
+		__do_unmount $1
+	fi
+}
+
+skip_test() {
+	cd ..
+	cleanup
+	exit 77
+}
+
+__do_mount() {
+	if ! ntfs-3g -o "no_def_opts,silent" $1 $2; then
+		if [ $UID -ne 0 ] && [ "$3" = "nofail" ]; then
+			echo "WARNING: skipping NTFS tests because we aren't able to "
+			echo "mount an NTFS volume (perhaps ntfs-3g is not installed setuid root?)"
+			skip_test
+		else
+			error "Could not mount NTFS volume \"$1\" on \"$2\"!  Make sure ntfs-3g is "\
+			      "installed, and that you are either running the tests as root or have ntfs-3g "\
+			      "installed setuid root, so that we can mount an NTFS volume."
+		fi
+	fi
+}
+
+do_mount() {
+	do_unmount $2
+	__do_mount $1 $2 $3
+}
+
+do_mkntfs() {
+	if ! mkntfs --force --fast $1 > /dev/null; then
+		error "Could not create NTFS volume \"$1\"!  Make sure ntfsprogs are installed."
+	fi
+}
+
+init() {
+	echo "Creating NTFS volumes and empty directories to use as mountpoints"
+	dd if=/dev/zero of=in.ntfs bs=4096 count=1000 &> /dev/null
+	dd if=/dev/zero of=out.ntfs bs=4096 count=1000 &> /dev/null
+	mkdir in.mnt out.mnt
+	do_mkntfs in.ntfs
+	do_mkntfs out.ntfs
+	do_mount in.ntfs in.mnt nofail
+}
+
+cleanup() {
+	do_unmount $TEST_SUBDIR/in.mnt
+	do_unmount $TEST_SUBDIR/out.mnt
+	rm -rf $TEST_SUBDIR
+}
+
+do_test() {
+	cd in.mnt
+	eval "$1"
+	cd ..
+	__do_unmount in.mnt
+	if ! wimcapture in.ntfs ntfs.wim; then
+		error "Failed to capture NTFS volume into a WIM"
+	fi
+	if ! wimapply ntfs.wim 1 out.ntfs; then
+		error "Failed to apply WIM to NTFS volume"
+	fi
+	__do_mount in.ntfs in.mnt noatime
+	__do_mount out.ntfs out.mnt noatime
+	if [ -x /usr/bin/tree ]; then
+		tree in.mnt --inodes -F -s --noreport
+	fi
+	if ! ../tree-cmp in.mnt out.mnt NTFS; then
+		if [ -x /usr/bin/tree ]; then
+			echo "Dumping tree of applied image"
+			tree out.mnt --inodes -F -s --noreport
+			error 'Information was lost or corrupted while capturing
+				and then applying an NTFS volume'
+		fi
+	fi
+	rm -rf out.mnt/* in.mnt/*
+	__do_unmount out.mnt
+}
+msg() {
+	echo "--------------------------------------------------------------------"
+	echo "Testing image capture and application of NTFS volume containing $1"
+	echo "--------------------------------------------------------------------"
+}
+
+cleanup
+mkdir $TEST_SUBDIR
+cd $TEST_SUBDIR
+init
+
+msg "Empty NTFS volume"
+do_test ""
+
+msg "a single file"
+do_test "echo 1 > file"
+
+msg "a single directory"
+do_test "mkdir dir"
+
+msg "subdirectory with file"
+do_test "mkdir dir; echo 1 > dir/file"
+
+msg "empty file"
+do_test "echo -n > empty_file"
+
+msg "two empty files"
+do_test "echo -n > empty_file_1; echo -n > empty_file_2"
+
+msg "hard link in same directory"
+do_test "echo 1 > file; ln file link"
+
+msg "hard link between empty files"
+do_test "echo -n > empty_file; ln empty_file link"
+
+msg "relative symbolic link"
+do_test "echo 1 > file; ln -s file symlink"
+
+msg "absolute symbolic link"
+do_test "echo 1 > file; ln -s /some/absolute/target symlink"
+
+msg "large file"
+do_test "dd if=/dev/zero of=file bs=4096 count=10 &> /dev/null"
+
+msg "file with DOS name"
+do_test "echo 1 > file; setfattr -v file -n system.ntfs_dos_name file"
+
+msg "many nested directories"
+do_test 'mkdir dir; mkdir dir/subdir; mkdir dir/subdir/subdir2; mkdir dir/subdir/subdir3'
+
+msg "identical files and symlinks in subdirectory"
+do_test 'mkdir dir;
+	 echo 888 > dir/file;
+	 echo 888 > dir/idfile2;
+	 ln -s ../dir dir/circle; ln -s file dir/filelink'
+
+msg "hard link group and identical files not hard linked"
+do_test 'echo 888 > file;
+	 echo 888 > file2;
+	 ln file link;
+	 ln file link2;
+	 echo 888 > file3'
+
+msg "file with named data stream"
+do_test 'echo 1 > file;
+	 setfattr -n user.ads -v 2 file'
+
+msg "file with multiple named data streams"
+do_test 'echo 1 > file;
+	 setfattr -n user.a -v 1 file;
+	 setfattr -n user.aa -v 11 file;
+	 setfattr -n user.aaa -v 111 file;
+	 setfattr -n user.aaaa -v 1111 file'
+
+msg "file with multiple named data streams with same contents"
+do_test 'echo 1 > file;
+	 setfattr -n user.a -v 1111 file;
+	 setfattr -n user.aa -v 1111 file;
+	 setfattr -n user.aaa -v 1111 file;
+	 setfattr -n user.aaaa -v 1111 file;'
+
+msg "file with named data streams with same contents as other file"
+do_test 'echo -n > file;
+	 setfattr -n user.a -v 1111 file;
+	 echo -n 1111 > otherfile;'
+
+msg "file with empty named data stream and non-empty unnamed data stream"
+do_test 'echo 1 > file;
+	 setfattr -n user.ads -v 0x file;'
+
+msg "file with empty named data stream and empty unnamed data stream"
+do_test 'echo -n > file;
+	 setfattr -n user.ads -v 0x file;'
+
+msg "file with named data stream with hardlink"
+do_test 'echo 999 > file;
+	 setfattr -n user.ads -v 0x123456 file;
+	 ln file link;'
+
+msg "C source code of wimlib"
+do_test 'cp $srcdir/src/*.c .'
+
+msg "file with security descriptor"
+do_test 'touch file;
+	 setfattr -n system.ntfs_acl -v 0s`cat $srcdir/tests/security_descriptor_1.base64` file'
+
+msg "file with object ID"
+do_test 'touch file;
+	 touch file2;
+	 setfattr -n system.ntfs_object_id -v 0x15ac83a36dc6cf8ec459b8017dd8626f file
+	 setfattr -n system.ntfs_object_id -v 0xf67394c12b17608e1d050d181ba8ffd27df80cbdf620f4c82c79b9e6799147b697621aff72915ade05abb96b15dea1a3e0bda4caa9e33cfd461c92c16be9713d file2'
+
+msg "files with different security descriptors"
+do_test 'touch file;
+	 touch file2;
+	 setfattr -n system.ntfs_acl -v 0s`cat $srcdir/tests/security_descriptor_1.base64` file
+	 setfattr -n system.ntfs_acl -v 0s`cat $srcdir/tests/security_descriptor_2.base64` file'
+
+msg "files with different security descriptors and some with the same security descriptor"
+do_test 'touch file;
+	 touch file2;
+	 touch file3;
+	 mkdir dir;
+	 setfattr -n system.ntfs_acl -v 0s`cat $srcdir/tests/security_descriptor_1.base64` file
+	 setfattr -n system.ntfs_acl -v 0s`cat $srcdir/tests/security_descriptor_2.base64` file
+	 setfattr -n system.ntfs_acl -v 0s`cat $srcdir/tests/security_descriptor_1.base64` dir
+	 setfattr -n system.ntfs_acl -v 0s`cat $srcdir/tests/security_descriptor_1.base64` file3'
+
+msg "tons of random stuff"
+do_test 'echo -n 8 > file;
+	 ln file hardlink;
+	 ln -s hardlink symlink;
+	 echo -n 8 > identical file;
+	 dd if=/dev/urandom of=randomfile bs=4096 count=10 &>/dev/null;
+	 mkdir dir;
+	 setfattr -n system.ntfs_dos_name -v DOSNAME dir;
+	 setfattr -n system.ntfs_acl -v 0s`cat $srcdir/tests/security_descriptor_1.base64` dir
+	 mkdir anotherdir;
+	 cp file anotherdir;
+	 ln file anotherdir/anotherhardlink;
+	 ln -s .. anotherdir/anothersymlink;
+	 ln -s anothersymlink anotherdir/symlinktosymlink;
+	 echo -n 33 > anotherfile;
+	 setfattr -n user.ads anotherfile -v 33;
+	 setfattr -n user.ads2 anotherfile -v 8;
+	 setfattr -n user.ads3 anotherfile -v 33;
+	 echo -n > emptyfile;
+	 setfattr -n user.ads emptyfile -v 8;
+	 setfattr -n user.ads5 emptyfile -v"`cat $srcdir/src/sha1.c`"
+	 mkdir dir/subdir;
+	 ln file dir/subdir/file;
+	 echo -n 8 > dir/subdir/file2;
+	 ln dir/subdir/file dir/subdir/link;
+	 echo -n > dir/subdir/empty;
+	 setfattr -n system.ntfs_dos_name -v 123 dir/subdir/empty;
+	 setfattr -n system.ntfs_acl -v 0s`cat $srcdir/tests/security_descriptor_1.base64` dir/subdir/link;
+	 setfattr -n user.yet_another_ads -v "" dir/subdir/link;
+	 setfattr -n user.yet_another_ads2 -v "" dir/subdir/link;
+	 setfattr -n user.yet_another_ads3 -v "abc" dir/subdir/link;
+	 setfattr -n user.yet_another_ads4 -v "" dir/subdir/link;'
+
+echo "**********************************************************"
+echo "           NTFS capture/apply tests passed                "
+echo "**********************************************************"
+
+cd ..
+cleanup
+

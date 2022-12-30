@@ -1,0 +1,272 @@
+#!/usr/bin/env bash
+
+# Test WIM mounting
+
+set -e
+cd tests
+srcdir="${srcdir:-.}/.."
+srcdir="$(cd $srcdir; pwd)"
+. "$srcdir/tests/test_utils.sh"
+
+TEST_SUBDIR=tmpdir_test-imagex-mount
+
+skip_test() {
+	cd ..
+	cleanup
+	exit 77
+}
+
+imagex_unmount() {
+	# Give the --lazy flag to work around a problem testing on Ubuntu and
+	# other OS's running Gnome, as they have a daemon
+	# "gvfs-gdu-volume-monitor" that apparently likes to randomly read
+	# filesystems that get mounted, thereby stopping them from being
+	# unmounted.
+	wimunmount "$@" --lazy
+}
+
+cleanup() {
+	fusermount -u $TEST_SUBDIR/tmp.mnt &> /dev/null || true
+	rm -rf $TEST_SUBDIR
+}
+
+init() {
+	mkdir dir
+	cp $srcdir/src/*.c dir
+	mkdir dir/subdir
+	echo 'hello' > dir/subdir/hello
+	echo 'hello' > dir/subdir/hello2
+	ln dir/subdir/hello dir/subdir/hellolink
+	echo -n > dir/subdir/empty_file
+	ln -s hello dir/subdir/rel_symlink
+
+	mkdir dir2
+	echo 'testing' > dir2/file
+	dd if=/dev/zero of=dir2/zeroes bs=4096 count=5
+	mkdir tmp.empty tmp.mnt tmp.apply tmp.orig
+	wimcapture tmp.empty empty.wim --norpfix
+}
+
+if [ ! -r /dev/fuse ] || [ ! -w /dev/fuse ]; then
+	echo "WARNING: /dev/fuse is not readable and writable."
+	echo "Skipping WIM mounting checks"
+	skip_test
+fi
+
+cleanup
+mkdir $TEST_SUBDIR
+cd $TEST_SUBDIR
+init
+
+# wimmount
+
+for flag in "--compress=none" "--compress=maximum" "--compress=fast"; do
+	echo "Using flag $flag"
+	echo "Testing mounting WIM read-only"
+	if ! wimcapture dir dir.wim $flag; then
+		error "Failed to capture WIM"
+	fi
+	if ! wimmount dir.wim dir tmp.mnt; then
+		error "Failed to mount test WIM read-only. " \
+		      "Please read any error messages above before reporting this test failure. "\
+		      "Perhaps you don't have FUSE installed, or the FUSE kernel module isn't" \
+		      "loaded, or you aren't a member of the FUSE group?"
+	fi
+	echo "Testing extracting file from mounted read-only WIM"
+	if ! cp tmp.mnt/write.c write.c; then
+		error "Failed to extract file from read-only mounted WIM"
+	fi
+	if ! diff -q dir/write.c write.c; then
+		error "Extracted file does not match copy in mounted WIM"
+	fi
+	if ! diff -q tmp.mnt/write.c dir/write.c; then
+		error "Extractef file does not match original"
+	fi
+	rm -f write.c
+	echo "Testing modifying mounted read-only WIM (should fail)"
+	if rm tmp.mnt/write.c; then
+		error "Removing file from read-only mounted WIM didn't fail"
+	fi
+	if touch tmp.mnt/newfile; then
+		error "Creating file on read-only mounted WIM didn't fail"
+	fi
+	if echo 3 > tmp.mnt/write.c; then
+		error "Writing to file on read-only mounted WIM didn't fail"
+	fi
+	echo "Testing diff of mounted read-only WIM with original directory"
+	if ! diff -q -r tmp.mnt dir; then
+		error "Recursive diff of read-only mounted WIM with original directory failed"
+	fi
+	echo "Testing unmount of read-only filesystem"
+	if ! imagex_unmount tmp.mnt; then
+		error "Unmounting read-only WIM failed"
+	fi
+	echo "Testing unmount of read-only filesystem with --commit given"
+	if ! wimmount dir.wim dir tmp.mnt; then
+		error "Failed to re-mount WIM read-only"
+	fi
+	if ! imagex_unmount tmp.mnt --commit; then
+		error "Failed to unmount read-only WIM with --commit flag (should be ignored)"
+	fi
+	rm -rf dir.wim
+done
+
+# wimmountrw
+echo "Testing mounting WIM read-write"
+if ! wimcapture dir dir.wim; then
+	error "Failed to capture WIM"
+fi
+if ! wimmountrw dir.wim dir tmp.mnt; then
+	error "Failed to mount test WIM read-write"
+fi
+echo "Testing unmounting WIM unmodified"
+if ! imagex_unmount tmp.mnt; then
+	error "Failed to unmount test WIM unmodified"
+fi
+echo "Testing unmounting WIM unmodified with --commit and --check"
+if ! wimmountrw dir.wim dir tmp.mnt; then
+	error "Failed to re-mount test WIM read-write"
+fi
+if ! imagex_unmount tmp.mnt --commit --check; then
+	error "Failed to unmount read-write mounted WIM with changes committed (no changes made)"
+fi
+echo "Testing removing file from mounted WIM"
+if ! wimmountrw dir.wim dir tmp.mnt; then
+	error "Failed to re-mount test WIM read-write"
+fi
+if ! rm tmp.mnt/write.c; then
+	error "Failed to remove file from read-write mounted WIM"
+fi
+if test -f tmp.mnt/write.c; then
+	error "Removing file from read-write mounted WIM failed"
+fi
+echo "Testing making directory in mounted WIM"
+if ! mkdir tmp.mnt/newdir; then
+	error "Failed to make directory in read-write mounted WIM"
+fi
+if ! test -d tmp.mnt/newdir; then
+	error "Making directory in read-write mounted WIM failed"
+fi
+echo "Testing making new empty file in mounted WIM"
+if ! touch tmp.mnt/newdir/empty_file; then
+	error "Could not create new empty file in read-write mounted WIM"
+fi
+if ! test -f tmp.mnt/newdir/empty_file; then
+	error "New empty file not created correctly in read-write mounted WIM"
+fi
+if ! test "`get_file_size tmp.mnt/newdir/empty_file`" = 0; then
+	error "New empty file in read-write mounted WIM is not empty"
+fi
+echo "Testing making new non-empty file in mounted WIM"
+if ! dd if=/dev/zero of=tmp.mnt/newdir/zeroes1 bs=1 count=4096; then
+	error "Failed to make new non-empty file in mounted WIM"
+fi
+if ! dd if=/dev/zero of=tmp.mnt/newdir/zeroes2 bs=4096 count=1; then
+	error "Failed to make new non-empty file in mounted WIM"
+fi
+if ! diff -q tmp.mnt/newdir/zeroes1 tmp.mnt/newdir/zeroes2; then
+	error "New files in mounted WIM not made correctly"
+fi
+echo "Unmounting WIM with changes committed and --check"
+if ! imagex_unmount tmp.mnt --commit --check; then
+	error "Failed to unmount read-write mounted WIM"
+fi
+if ! wiminfo dir.wim | grep -q Integrity; then
+	error "Integrity information was not included"
+fi
+if ! wimapply dir.wim tmp.apply; then
+	error "Failed to apply WIM we had previously mounted read-write"
+fi
+if ! diff -q tmp.apply/newdir/zeroes1 tmp.apply/newdir/zeroes2; then
+	error "The new non-empty files we made in the read-write mounted WIM were not extracted correctly"
+fi
+if test `get_file_size tmp.apply/newdir/empty_file` != 0; then
+	error "The new empty file we made in the read-write mounted WIM was not extracted correctly"
+fi
+if test `get_file_size tmp.apply/newdir/zeroes1` != 4096; then
+	error "The new non-empty files we made in the read-write mounted WIM were not extracted correctly"
+fi
+rm -rf tmp.apply/*
+
+# Now do some tests using tar.
+do_tree_cmp() {
+	if ! ../tree-cmp $1 $2; then
+		if [ -x /usr/bin/tree ]; then
+			echo "Dumping tree of applied image"
+			tree $2 --inodes -F -s --noreport
+			error 'Information was lost or corrupted while capturing
+				and then applying a directory tree'
+		fi
+	fi
+}
+
+msg() {
+	echo "--------------------------------------------------------------------"
+	echo "Testing making $1 on read-write mounted WIM"
+	echo "--------------------------------------------------------------------"
+}
+
+do_test() {
+
+	# Create tree, tar it up, and untar it on an empty WIM image mounted
+	# read-write
+
+	cp empty.wim test.wim
+
+	cd tmp.orig
+	eval "$1"
+	if [ -x /usr/bin/tree ]; then
+		tree . --inodes -F -s --noreport
+	fi
+	tar cf ../test.tar .
+	cd ..
+
+	if ! wimmountrw test.wim tmp.mnt --unix-data; then
+		error "Failed to mount WIM read-write"
+	fi
+
+	cd tmp.mnt
+	if ! tar xf ../test.tar; then
+		error "Failed to untar archive on read-write mounted WIM"
+	fi
+	cd ..
+
+	# Diff the original tree with the mounted WIM
+	do_tree_cmp tmp.orig tmp.mnt
+
+	# Clear the mounted WIM and do it again!  (We need to test deleting
+	# stuff as well as creating stuff.)
+	if ! rm -rf tmp.mnt/*; then
+		error "Failed to clear mounted WIM"
+	fi
+
+	cd tmp.mnt
+	if ! tar xf ../test.tar; then
+		error "Failed to untar archive on read-write mounted WIM"
+	fi
+	cd ..
+
+	# Diff the original tree with the mounted WIM
+	do_tree_cmp tmp.orig tmp.mnt
+
+	# Unmount the WIM, apply it, and diff the original tree with the applied
+	# tree
+	if ! imagex_unmount tmp.mnt --commit; then
+		error "Failed to unmount WIM mounted read-write"
+	fi
+	if ! wimapply test.wim tmp.apply; then
+		error "Failed to apply WIM we previously had mounted read-write"
+	fi
+	do_tree_cmp tmp.orig tmp.apply
+	rm -rf tmp.orig/* tmp.apply/*
+}
+
+. $srcdir/tests/common_tests.sh
+
+
+echo "**********************************************************"
+echo "                 WIM mount tests passed                   "
+echo "**********************************************************"
+
+cd ..
+cleanup

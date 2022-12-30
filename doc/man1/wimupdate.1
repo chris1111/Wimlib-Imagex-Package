@@ -1,0 +1,298 @@
+.TH WIMUPDATE "1" "September 2022" "wimlib 1.13.6" "User Commands"
+.SH NAME
+wimupdate \- Update a WIM image
+.SH SYNOPSIS
+\fBwimupdate\fR \fIWIMFILE\fR [\fIIMAGE\fR] [\fIOPTION\fR...] [< \fICMDFILE\fR]
+.SH DESCRIPTION
+\fBwimupdate\fR, or equivalently \fBwimlib-imagex update\fR, modifies the
+specified \fIIMAGE\fR in the Windows Imaging (WIM) archive \fIWIMFILE\fR by
+adding, deleting, or renaming files or directories in it.
+.PP
+\fIIMAGE\fR specifies the image in \fIWIMFILE\fR to update.  It may be the 1-based
+index of an image or the name of an image.  It may be omitted if \fIWIMFILE\fR
+contains only one image.  You can use \fBwiminfo\fR(1) to list the images
+contained in \fIWIMFILE\fR.
+.PP
+The modifications to perform on the WIM image are specified as a sequence of
+commands, one per line, read in a text file from standard input.  It is
+recommended that standard input be redirected from a file (\fICMDFILE\fR), as
+shown above, rather than typing in commands interactively.  Alternatively, to
+specify a command directly on the command line, see the \fB--command\fR option.
+.SH AVAILABLE COMMANDS
+This section documents the commands that may appear in the \fICMDFILE\fR
+described above.
+.SS \fBadd\fR [\fIOPTION\fR...] \fISOURCE\fR \fIDESTINATION\fR
+Add a file or directory tree to the WIM image.  \fISOURCE\fR must specify the
+path to a file or directory on your filesystem.  \fIDESTINATION\fR must specify
+the path inside the WIM image at which to add the file or directory tree.
+.PP
+If \fIDESTINATION\fR names an existing directory in the WIM image, then
+\fISOURCE\fR must also name a directory.  This causes the contents of the
+\fISOURCE\fR directory to be added to the \fIDESTINATION\fR directory.
+.PP
+If \fIDESTINATION\fR names an existing nondirectory file in the WIM image, then
+\fISOURCE\fR must also name a nondirectory file.  By default, this causes the
+\fIDESTINATION\fR file to be replaced with the \fISOURCE\fR file.  Or, with
+\fB--no-replace\fR specified, this generates an error.
+.PP
+If \fIDESTINATION\fR does not exist in the WIM image, then any prerequisite
+directories are created as needed to add the \fISOURCE\fR at that location.
+.PP
+The \fBadd\fR command supports a subset of the options accepted by
+\fBwimcapture\fR; namely, \fB--dereference\fR, \fB--unix-data\fR,
+\fB--no-acls\fR, and \fB--strict-acls\fR.  See \fBwimcapture\fR(1) for
+explanations of these options.
+.PP
+In addition, the \fBadd\fR command supports the \fB--no-replace\fR option, which
+causes the \fBadd\fR command to refuse to overwrite existing nondirectory files
+in the WIM image.
+.SS \fBdelete\fR [\fIOPTION\fR...] \fIPATH\fR
+Delete a file or directory tree from the WIM image.  \fIPATH\fR must specify the
+path inside the WIM image of the file or directory tree to delete.
+.PP
+The available options for the \fBdelete\fR command are:
+.TP 6
+\fB--force\fR
+Do not issue an error if the path to delete does not exist.
+.TP
+\fB--recursive\fR
+Delete the file or directory tree recursively; if not specified, an error is
+issued if the path to delete is a directory.
+.SS \fBrename\fR \fIOLD_PATH\fR \fINEW_PATH\fR
+Rename a file or directory tree inside the WIM image.  \fIOLD_PATH\fR must
+specify the old path of the file or directory tree inside the WIM image, and
+\fINEW_PATH\fR must specify the new path for the file or directory tree.  This
+command follows the semantics of the POSIX \fBrename\fR (3) function; in
+particular, a pre-existing file at \fINEW_PATH\fR will be deleted if present,
+except in certain cases such as attempting to rename a directory to a
+non-directory, which is not allowed.
+.PP
+There are no options available for the \fBrename\fR command.
+.SH OPTIONS
+The following options are accepted on the command line by \fBwimupdate\fR
+itself:
+.TP 6
+\fB--dereference\fR
+Use \fB--dereference\fR for all \fBadd\fR commands.
+.TP
+\fB--unix-data\fR
+Use \fB--unix-data\fR for all \fBadd\fR commands.
+.TP
+\fB--no-acls\fR
+Use \fB--no-acls\fR for all \fBadd\fR commands.
+.TP
+\fB--strict-acls\fR
+Use \fB--strict-acls\fR for all \fBadd\fR commands.
+.TP
+\fB--no-replace\fR
+Use \fB--no-replace\fR for all \fBadd\fR commands.
+.TP
+\fB--config\fR=\fIFILE\fR
+Set the capture configuration file for all \fBadd\fR commands.  See the
+description of this option to \fBwimcapture\fR(1).
+.TP
+\fB--force\fR
+Use \fB--force\fR for all \fBdelete\fR commands.
+.TP
+\fB--recursive\fR
+Use \fB--recursive\fR for all \fBdelete\fR commands.
+.TP
+\fB--check\fR
+Before updating the WIM, verify its integrity if it contains extra integrity
+information.  Also include extra integrity information in the updated WIM even
+if it was not present before.
+.TP
+\fB--include-integrity\fR
+Include extra integrity information in the updated WIM, i.e. like \fB--check\fR
+but don't also verify the WIM beforehand.
+.TP
+\fB--threads\fR=\fINUM_THREADS\fR
+Number of threads to use for compressing newly added files.  Default: autodetect
+(number of processors).
+.TP
+\fB--rebuild\fR
+Rebuild the entire WIM rather than appending the updated data to the end of it.
+Rebuilding the WIM is slower, but will save a little bit of space that would
+otherwise be left as a hole in the WIM file.
+.IP
+See \fBwimoptimize\fR(1) for a more customizable way of rebuilding (and
+optionally recompressing) a WIM file.  If running \fBwimoptimize\fR after
+\fBwimupdate\fR, there is no need to specify \fB--rebuild\fR to \fBwimupdate\fR.
+.TP
+\fB--command\fR=\fISTRING\fR
+Instead of reading update commands from standard input, read a single update
+command directly from the string \fISTRING\fR specified on the command line.
+This option cannot be provided more than one time and cannot be used to specify
+more than one update command.  Note that the \fISTRING\fR, as well as any
+paths containing spaces within the \fISTRING\fR must be appropriately quoted.
+If running from cmd.exe on Windows, you should use double quotes for the outer
+quotes and single quotes for the inner quotes.  Example:
+.IP
+.RS
+.RS
+wimupdate boot.wim 1 --command="add 'C:\\My Dir' '\\My Dir'"
+.RE
+.RE
+.IP
+This option is provided for convenience only.  Do not execute \fBwimupdate\fR
+multiple consecutive times, each time passing the \fB--command\fR option!  This
+is inefficient.  Instead, generate an update command file and provide it (on
+standard input) to a single invocation of \fBwimupdate\fR, as explained in this
+document.
+.TP
+\fB--wimboot-config\fR=\fIFILE\fR
+If this option is specified, no commands shall be read from standard input, and
+instead the following command shall be executed:
+.IP
+.nf
+.RS
+.RS
+\fBadd\fR \fIFILE\fR /Windows/System32/WimBootCompress.ini
+.RE
+.RE
+.fi
+.IP
+This sets \fIFILE\fR as the WIMBoot configuration file for the image.  The
+[PrepopulateList] section of this file specifies path globs that shall not be
+extracted as WIMBoot pointer files (perhaps due to being needed early in the
+boot process).  See the documentation for the \fB--wimboot\fR option of
+\fBwimapply\fR(1) for more information.
+.TP
+\fB--unsafe-compact\fR
+Compact the WIM archive in-place and append any new data, eliminating "holes".
+This is efficient, but in general this option should \fInot\fR be used because a
+failed or interrupted compaction will corrupt the WIM archive.  For more
+information, see the documentation for this option in \fBwimoptimize\fR(1).
+.SH NOTES
+\fBwimupdate\fR can be viewed as redundant with \fBwimmountrw\fR, since a WIM
+image can also be updated by mounting it read-write.  However, \fBwimupdate\fR
+works on all platforms including Windows, whereas \fBwimmountrw\fR only works on
+Linux.
+.PP
+Symbolic links inside a WIM image are not dereferenced when being interpreted.
+So, for example, if you have a WIM image that contains a symbolic link
+"/Documents and Settings" -> "/Users" where "/Users" is a directory, then a
+subdirectory named "Public" in this directory must be specified as
+"/Users/Public" rather than "/Documents and Settings/Public".
+.PP
+All paths to files or directories within the WIM image must be specified
+relative to the root of the image.  However, the leading slash is optional, and
+both forward slashes and backslashes are accepted.  In addition, on Windows, the
+paths are by default treated case-insensitively, while on UNIX-like systems, the
+paths are by default treated case-sensitively.  The default case sensitivity may
+be changed by setting the \fBWIMLIB_IMAGEX_IGNORE_CASE\fR environmental
+variable to 0 or 1.
+.PP
+The command file (\fICMDFILE\fR) is parsed by \fBwimupdate\fR itself and not by
+the system shell.  Therefore, its syntax is limited.  However, comment lines
+beginning with '#' are allowed, and it is also possible to quote arguments with
+whitespace inside them.
+.PP
+On UNIX-like systems, you cannot use \fBwimupdate\fR to add files to an image
+directly from an NTFS volume using libntfs-3g, even though \fBwimcapture\fR
+supports capturing a full image this way.
+.PP
+Except when using \fB--unsafe-compact\fR, it is safe to abort a \fBwimupdate\fR
+command partway through; however, after doing this, it is recommended to run
+\fBwimoptimize\fR to remove any data that was appended to the physical WIM file
+but not yet incorporated into the structure of the WIM, unless \fB--rebuild\fR
+was specified, in which case you should delete the temporary file left over.
+.SH EXAMPLES
+All the examples below show the update command file to be created as well as the
+\fBwimupdate\fR command to run to perform the updates.
+.PP
+Delete two files from a WIM image:
+.PP
+.RS
+\fIupdate_commands.txt\fR:
+.RS
+.PP
+.nf
+delete /setup.exe
+delete /sources/setup.exe
+.fi
+.RE
+.RE
+.PP
+.RS
+$ wimupdate boot.wim 2 < update_commands.txt
+.RE
+.PP
+Add some files and directories to a WIM image.  Note that the first path of each
+\fBadd\fR command specifies the files to add, while the second path of each
+\fBadd\fR command specify the locations at which to add them inside the WIM
+image:
+.PP
+.RS
+\fIupdate_commands.txt\fR:
+.RS
+.PP
+.nf
+add somedir     /dir
+add somefile    /dir/file
+.fi
+.RE
+.RE
+.PP
+.RS
+$ wimupdate boot.wim 2 < update_commands.txt
+.RE
+.PP
+Rename a file inside a WIM image.
+.PP
+.RS
+\fIupdate_commands.txt\fR:
+.RS
+.PP
+.nf
+rename /dir_in_wim/oldfile.txt /dir_in_wim/newfile.txt
+.fi
+.RE
+.RE
+.PP
+.RS
+$ wimupdate boot.wim 2 < update_commands.txt
+.RE
+.PP
+Using additional features, such as comments, options, and overlays, and
+including extra integrity information in the updated WIM:
+.PP
+.RS
+\fIupdate_commands.txt\fR:
+.RS
+.PP
+.nf
+#
+# This file specifies some changes to make to a WIM image.
+#
+
+# Add a new directory containing files I want in the image.
+# The quotes are necessary because the directory name
+# contains a space.
+add "My Directory" "/My Directory"
+
+# Add the contents of "Another Directory" to the
+# "/My Directory" we just created in the WIM image.  Since
+# the destination path already exists, this performs an
+# overlay.
+add "Another Directory" "/My Directory"
+
+# Rename some file for some reason.
+rename /dir_in_wim/oldfile.txt /dir_in_wim/newfile.txt
+
+# Delete an unwanted directory.
+delete --recursive /Users/Me/Documents/Junk
+.fi
+.RE
+.RE
+.PP
+.RS
+$ wimupdate boot.wim 2 --check < update_commands.txt
+.RE
+.PP
+.SH SEE ALSO
+.BR wimlib-imagex (1)
+.BR wimcapture (1)
+.BR wiminfo (1)
+.BR wimmountrw (1)
+.BR wimoptimize (1)

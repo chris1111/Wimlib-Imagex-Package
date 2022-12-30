@@ -1,0 +1,343 @@
+#!/usr/bin/env bash
+
+# Test capturing and applying a WIM image in the normal (non-NTFS) capture mode
+#
+# Add in some tests with WIM splitting, joining, and exporting as well.
+#
+# Test all three compression modes (None, XPRESS, and LZX).
+#
+# Also, test if the capture configuration file works correctly.
+
+set -e
+cd tests
+srcdir="${srcdir:-.}/.."
+srcdir="$(cd $srcdir; pwd)"
+. "$srcdir/tests/test_utils.sh"
+
+TEST_SUBDIR=tmpdir_test-imagex-capture_and_apply
+
+do_tree_cmp() {
+	if ! ../tree-cmp in.dir out.dir; then
+		if [ -x /usr/bin/tree ]; then
+			echo "Dumping tree of applied image"
+			echo "(Note: compression type was $ctype)"
+			tree out.dir --inodes -F -s --noreport
+			error 'Information was lost or corrupted while capturing
+				and then applying a directory tree'
+		fi
+	fi
+}
+
+image_name=0
+do_test() {
+	for ctype in None XPRESS LZX; do
+
+		# Can we capture the WIM, apply it, and get the same result?
+		cd in.dir
+		eval "$1"
+		cd ..
+		if [ -x /usr/bin/tree -a "$ctype" = "None" ]; then
+			tree in.dir --inodes -F -s --noreport
+		fi
+		if ! wimcapture in.dir test.wim --compress=$ctype --norpfix; then
+			error "Failed to capture directory tree into a WIM"
+		fi
+		if ! wimapply test.wim 1 out.dir; then
+			error "Failed to apply WIM to directory"
+		fi
+		if [ `wim_ctype test.wim` != $ctype ]; then
+			error "'wiminfo' didn't report the compression type on the captured WIM correctly"
+		fi
+		do_tree_cmp
+		rm -rf out.dir/*
+
+		# Can we split the WIM, apply the split WIM, join the split WIM,
+		# and apply the joined WIM, and get the same results every time?
+		#
+		# LC_ALL=C avoids locale-dependent floating point number
+		# parsing.
+		if ! LC_ALL=C wimsplit test.wim test.swm 0.01; then
+			error "Failed to split WIM"
+		fi
+		if ! wimapply test.swm 1 out.dir --ref "test*.swm" ; then
+			error "Failed to apply split WIM"
+		fi
+		do_tree_cmp
+		rm -rf out.dir/* test.wim
+		if ! wimjoin test.wim test*.swm; then
+			error "Failed to join split WIM"
+		fi
+		if ! wimapply test.wim out.dir; then
+			error "Failed to apply joined WIM"
+		fi
+		do_tree_cmp
+		rm -rf out.dir/*
+
+		# Can we export the image to another WIM, apply it, and get the
+		# same results?
+		(( image_name++ )) || true
+		if ! wimexport test.wim 1 test2.wim "$image_name"; then
+			error "Failed to export WIM image"
+		fi
+
+		if ! wimapply test2.wim "$image_name" out.dir; then
+			error "Failed to apply exported WIM image"
+		fi
+		do_tree_cmp
+		rm -rf out.dir/*
+
+		# Try pipable WIM (don't bother testing all compression types
+		# though, it shouldn't make a difference).
+		if [ "$ctype" = "None" ]; then
+			# Capture pipable WIM (not writing to pipe)
+			if ! wimcapture in.dir test.wim \
+					--compress=$ctype --norpfix --pipable; then
+				error "Failed to capture directory tree into a pipable WIM"
+			fi
+
+			# Apply pipable WIM (reading from pipe)
+			if ! cat test.wim | wimapply - 1 out.dir; then
+				error "Failed to apply pipable WIM to directory (from pipe)"
+			fi
+			do_tree_cmp
+			rm -rf out.dir/*
+
+			# Apply pipable WIM (not reading from pipe)
+			if ! wimapply test.wim 1 out.dir; then
+				error "Failed to apply pipable WIM to directory (not from pipe)"
+			fi
+			do_tree_cmp
+			rm -rf out.dir/*
+
+			# Capture pipable WIM (writing to pipe) and read pipable
+			# WIM (reading from pipe)
+			if ! wimlib_imagex capture --pipable --compress=$ctype \
+						--norpfix --pipable         \
+					    in.dir - | wimapply - 1 out.dir; then
+				error "Failed to capture directory tree into a pipable WIM"
+			fi
+			do_tree_cmp
+			rm -rf out.dir/*
+		fi
+
+		rm -rf out.dir/* in.dir/* test.wim test*.swm
+
+	done
+}
+
+__msg() {
+	echo "--------------------------------------------------------------------"
+	echo $1
+	echo "--------------------------------------------------------------------"
+}
+
+msg() {
+	__msg "Testing image capture and application of directory containing $1"
+}
+
+default_cleanup
+mkdir $TEST_SUBDIR
+cd $TEST_SUBDIR
+mkdir in.dir out.dir
+
+. $srcdir/tests/common_tests.sh
+
+# Test the data recovery mode
+__msg "Testing data recovery mode"
+for file in corrupted_file_1.wim corrupted_file_2.wim; do
+	rm -rf out.dir
+	wimapply $srcdir/tests/wims/$file 1 out.dir 2>/dev/null && \
+		error "Applying $file in default mode unexpectedly succeeded"
+	rm -rf out.dir
+	wimapply --recover-data $srcdir/tests/wims/$file 1 out.dir || \
+		error "Applying $file in data recovery mode unexpectedly failed"
+	if [ ! -e out.dir/file ]; then
+		error "Recovered file not found"
+	fi
+done
+
+# Make sure exclusion list works
+__msg "Testing default capture configuration file"
+touch in.dir/hiberfil.sys
+mkdir -p "in.dir/System Volume Information/subdir"
+wimcapture in.dir test.wim
+wimapply test.wim out.dir
+if [ -e out.dir/hiberfil.sys -o -e "out.dir/System Volume Information" ]; then
+	error "Files were not excluded from capture as expected"
+fi
+
+#
+# Execute one of the exclusion list test cases in tests/exclusionlists/.
+# The file is divided into two sections, separated by a line containing "@@@".
+# The first is the capture configuration file.  The second is a list of files
+# and directories, where the ones that should be excluded are marked with "- ".
+#
+exclusionlist_test() {
+	local t_file="$1"
+	local in_paths_section=false
+	local path
+	local include
+
+	__msg "Testing exclusion list: ${t_file##*/}"
+
+	echo "/" > expected_out
+	sed -n -e '/^@@@/q;p' "$t_file" > config.txt
+	rm -rf in.dir
+	mkdir in.dir
+	cd in.dir
+	while read -r path; do
+		path="$(echo "$path" | sed -e 's/[[:space:]]*$//')"
+		if ! $in_paths_section; then
+			if [ "$path" = "# case insensitive" ]; then
+				export WIMLIB_IMAGEX_IGNORE_CASE=1
+			elif [ "$path" = "@@@" ]; then
+				in_paths_section=true
+			fi
+			continue
+		fi
+		if [ -z "$path" ]; then
+			continue
+		fi
+		include=true
+		if [ "${path:0:2}" = "- " ]; then
+			include=false
+			path="${path:2}"
+		fi
+		if [ "${path: -1}" = "/" ]; then
+			path="${path:0:$(( ${#path} - 1))}"
+			mkdir "$path"
+		else
+			touch "$path"
+		fi
+		if $include; then
+			echo "/$path" >> ../expected_out
+		fi
+	done < "$t_file"
+	cd ..
+	$in_paths_section || error "malformed test file: $t_file (never found separator)"
+	wimcapture in.dir test.wim --compress=none --config=config.txt
+	unset WIMLIB_IMAGEX_IGNORE_CASE
+	wimdir test.wim 1 > actual_out
+	diff expected_out actual_out
+}
+
+for t_file in "$srcdir/tests/exclusionlists"/*; do
+	exclusionlist_test "$t_file"
+done
+
+# Make sure reparse point fixups are working as expected
+__msg "Testing --rpfix"
+rm -r in.dir out.dir
+mkdir in.dir
+ln -s $PWD/in.dir          in.dir/absrootlink
+ln -s $PWD/in.dir////      in.dir/absrootlinkslashes
+ln -s /___NONEXISTENT___   in.dir/absnonexistent
+ln -s /usr/bin/env         in.dir/absoutoftree
+ln -s file                 in.dir/relalink
+ln -s $PWD/in.dir/file     in.dir/abslink
+ln -s $PWD/in.dir/file///  in.dir/abslinkslashes
+wimcapture --rpfix in.dir test.wim
+wimapply --norpfix test.wim out.dir
+if [[ `readlink out.dir/absrootlink` != "/" ]] ||
+   [[ `readlink out.dir/absrootlinkslashes` != "////" ]]; then
+	error "wimcapture --rpfix failed to fix absolute link to capture root"
+fi
+
+if [[ ! -L out.dir/absnonexistent ]] ||
+   [[ ! -L out.dir/absoutoftree ]]; then
+	error "wimcapture --rpfix failed to also capture out of tree absolute links"
+fi
+if [[ `readlink out.dir/relalink` != "file" ]]; then
+	error "wimcapture --rpfix failed to capture relative symlink"
+fi
+if [[ `readlink out.dir/abslink` != "/file" ]] ||
+   [[ `readlink out.dir/abslinkslashes` != "/file///" ]]; then
+	error "wimcapture --rpfix did fix absolute link properly"
+fi
+rm -rf out.dir
+
+wimapply test.wim out.dir
+if [[ $(get_inode_number $(readlink out.dir/absrootlink)) != \
+	$(get_inode_number out.dir) ]];
+then
+	error "wimapply failed to apply fixed absolute symlinks"
+fi
+
+# Make sure source list mode is working as expected
+__msg "Testing source list capture mode"
+rm -rf in.dir out.dir
+mkdir in.dir
+echo 1 > in.dir/1
+ln in.dir/1 in.dir/1link
+echo 5 > 5
+mkdir otherdir
+cp $srcdir/src/add_image.c otherdir
+cat > srclist << EOF
+in.dir /
+5      /5
+otherdir /otherdir
+EOF
+wimcapture srclist --source-list test.wim
+wimapply test.wim out.dir
+if [[ ! -f out.dir/5 || ! -f out.dir/1 || ! -f out.dir/1link || \
+      ! -d out.dir/otherdir ]]; then
+	error "source list capture failed to work as expected"
+fi
+
+# Still testing source list capture: add quoted name, and try overlay
+rm -rf out.dir
+cat > srclist << EOF
+in.dir /
+5      /5
+otherdir /otherdir
+ "overlay dir 1"		'otherdir'  	
+ "overlay dir 2"		'otherdir'  
+EOF
+mkdir "overlay dir 1"
+mkdir "overlay dir 2"
+echo A > "overlay dir 1"/A
+echo B > "overlay dir 2"/B
+wimcapture srclist --source-list test.wim
+wimapply test.wim out.dir
+if [[ ! -f out.dir/5 || ! -f out.dir/1 || ! -f out.dir/1link || \
+      ! -f out.dir/otherdir/A || ! -f out.dir/otherdir/B ]]; then
+	error "source list capture (with quoted names and basic overlay) failed to work as expected"
+fi
+
+# Try deep overlay
+rm -rf in.dir out.dir "overlay dir 1" "overlay dir 2"
+mkdir -p in.dir.1/subdir/subdir2 in.dir.2/subdir/subdir2
+cat > srclist << EOF
+in.dir.1	/
+in.dir.2	/
+EOF
+echo 1 > in.dir.1/subdir/1
+echo 2 > in.dir.2/subdir/2
+echo 3 > in.dir.1/subdir/subdir2/3
+echo 4 > in.dir.2/subdir/subdir2/4
+wimcapture srclist --source-list test.wim
+wimapply test.wim out.dir
+if [[ ! -f out.dir/subdir/1 || ! -f out.dir/subdir/2 ||	\
+	! -f out.dir/subdir/subdir2/3 || ! -f out.dir/subdir/subdir2/4 ]]; then
+	error "source list capture (with deep overlay) failed to work as expected"
+fi
+
+# Try bad overlay
+__msg "Testing bad overlay (errors expected)"
+rm -rf out.dir
+echo 5 > 5
+cat > srclist << EOF
+in.dir.1	/
+in.dir.2	/
+5		/subdir
+EOF
+if wimcapture srclist --source-list test.wim; then
+	error "unexpected success in bad overlay with --source-list!"
+fi
+
+echo "**********************************************************"
+echo "          wimcapture/apply tests passed               "
+echo "**********************************************************"
+
+cd ..
+default_cleanup

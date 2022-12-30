@@ -1,0 +1,2 @@
+This directory shows some simple examples of C programs that use wimlib.
+See programs/imagex.c for a more complete example.
