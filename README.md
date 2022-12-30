@@ -9,6 +9,15 @@
 
 See ➤ [What is wimlib](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/README)
 
+- [x] `Usage`
+
+#### Installation
+```bash
+git clone https://github.com/chris1111/Wimlib-Imagex-Package
+cd Wimlib-Imagex-Package
+./Build-Package.tool
+```
+
 ### wimlib-imagex for macOS its a macOS Packages for installing Wimlib without Homebrew.
 - This program will install wimlib-imagex in /usr/local/bin
 - This program will allow you to create a Windows 11 Bootable USB key in macOS
