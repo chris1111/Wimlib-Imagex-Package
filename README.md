@@ -3,9 +3,11 @@
 # Wimlib-Imagex-Package
 - Wimlib-Imagex for macOS, working from macOS Catalina 10.15 to macOS Ventura 13
 - Working for real Mac and Hackintosh
-### Warning: Only works from macOS Catalina and above
-### prerequisite: Command Line Tools from Apple
+#### Warning: Only works from macOS Catalina and above
+#### Prerequisite: Command Line Tools (CLT) for Xcode (from xcode-select --install or https://developer.apple.com/download/all/)
 - If you have Xcode installed that's also good
+- A 64-bit Intel CPU
+
 
 <img width="128" alt="Instruments" src="https://user-images.githubusercontent.com/6248794/210024502-622f67b8-4318-40c2-9748-43ab72e6eea7.png">
 
