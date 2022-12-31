@@ -1,7 +1,8 @@
 ## Topic Page is being updated! Please wait for the conclusion.
 
 # Wimlib-Imagex-Package
-## We use cross-platform Library wimlib to built it in macos
+## We use cross-platform Library wimlib to built it in macos.
+### Important do not mix this program with that of Homebrew! Use Wimlib-Imagex-Package alone.
 
 - Wimlib-Imagex for macOS, working from macOS Sierra 10.12 to macOS Ventura 13 
 - NOTE: Probably works in macs lower than 10.12 but not tested yet
