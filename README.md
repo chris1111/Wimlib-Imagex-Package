@@ -30,6 +30,7 @@ git clone https://github.com/chris1111/Wimlib-Imagex-Package
 
 ### Credit: 
 - Special thanks to ➤ [Wimlib](https://wimlib.net/) for Wimlib
+- Special thanks to ➤ [Homebrew](https://github.com/homebrew) for the build Library
 - Apple for AppleScript and the command line Pkgbuild, Productbuild, Osacompile
 
 ### Now you can create Windows 11 USB disk in macOS
