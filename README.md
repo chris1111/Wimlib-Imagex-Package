@@ -8,7 +8,7 @@
 - NOTE: Probably works in macs lower than 10.12 but not tested yet
 - Working for real Mac and Hackintosh
 
-#### Prerequisite: Command Line Tools (CLT) for Xcode (from xcode-select --install or https://developer.apple.com/download/all/)
+#### Prerequisite: Command Line Tools (CLT) for Xcode (from `xcode-select --install` or https://developer.apple.com/download/all/)
 - If you have Xcode installed that's also good
 - A 64-bit Intel CPU
 
