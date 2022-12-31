@@ -1,9 +1,12 @@
 ## Topic Page is being updated! Please wait for the conclusion.
 
 # Wimlib-Imagex-Package
-- Wimlib-Imagex for macOS, working from macOS Sierra 10.12 to macOS Ventura 13
+## We use cross-platform Library wimlib to built it in macos
+
+- Wimlib-Imagex for macOS, working from macOS Sierra 10.12 to macOS Ventura 13 
+- NOTE: Probably works in macs lower than 10.12 but not tested yet
 - Working for real Mac and Hackintosh
-#### Warning: Only works from macOS Sierra and above
+
 #### Prerequisite: Command Line Tools (CLT) for Xcode (from xcode-select --install or https://developer.apple.com/download/all/)
 - If you have Xcode installed that's also good
 - A 64-bit Intel CPU
@@ -23,17 +26,16 @@ git clone https://github.com/chris1111/Wimlib-Imagex-Package
 ./Wimlib-Imagex-Package/Build-Package.tool
 ```
 
-### wimlib-imagex for macOS its a macOS Packages for installing Wimlib without Homebrew.
-- This program will install wimlib-imagex in /usr/local/bin
+### wimlib-imagex for macOS its a cross-platform Library wimlib to built it in macos
+- This program will built then install wimlib-imagex in /usr/local/bin
 - This program will allow you to create a Windows 11 Bootable USB key in macOS
-- You need a USB key of 8 Gig and more and the Windows ISO image X64 download from ➤ [Microsoft](https://www.microsoft.com/en-us/software-download/windows11)
+- For installing Windows You need a USB key of 8 Gig and more and the Windows ISO image X64 download from ➤ [Microsoft](https://www.microsoft.com/en-us/software-download/windows11)
 
 ### Credit: 
 - Special thanks to ➤ [Wimlib](https://wimlib.net/) for Wimlib
 - Special thanks to ➤ [Homebrew](https://github.com/homebrew) for the build Library
-- Apple for AppleScript and the command line Pkgbuild, Productbuild, Osacompile
+- Apple for the Command Line Tools (CLT)
 
-### Now you can create Windows 11 USB disk in macOS
-- SIP Security and Gatekeeper must be disable
+### SIP Security and Gatekeeper must be disable
 - WINUSB is bootable only in UEFI ( 🚫  Not working in Legacy booting )
 
