@@ -1,9 +1,9 @@
 ## Topic Page is being updated! Please wait for the conclusion.
 
 # Wimlib-Imagex-Package
-- Wimlib-Imagex for macOS, working from macOS Catalina 10.15 to macOS Ventura 13
+- Wimlib-Imagex for macOS, working from macOS Sierra 10.12 to macOS Ventura 13
 - Working for real Mac and Hackintosh
-#### Warning: Only works from macOS Catalina and above
+#### Warning: Only works from macOS Sierra and above
 #### Prerequisite: Command Line Tools (CLT) for Xcode (from xcode-select --install or https://developer.apple.com/download/all/)
 - If you have Xcode installed that's also good
 - A 64-bit Intel CPU
@@ -17,9 +17,10 @@ See ➤ [What is wimlib](https://github.com/chris1111/Wimlib-Imagex-Package/blob
 
 #### Installation
 ```bash
+mkdir -p WimlibDev
+cd WimlibDev
 git clone https://github.com/chris1111/Wimlib-Imagex-Package
-cd Wimlib-Imagex-Package
-./Build-Package.tool
+./Wimlib-Imagex-Package/Build-Package.tool
 ```
 
 ### wimlib-imagex for macOS its a macOS Packages for installing Wimlib without Homebrew.
