@@ -15,7 +15,8 @@
 - Windows ISO image X64 download from ➤ [Microsoft](https://www.microsoft.com/en-us/software-download/windows11)
 
 
-<img width="128" alt="Instruments" src="https://user-images.githubusercontent.com/6248794/210024502-622f67b8-4318-40c2-9748-43ab72e6eea7.png">
+<img width="128" alt="logo" src="https://user-images.githubusercontent.com/6248794/211173953-4df687de-26e9-40b8-9053-62be4f1a03f8.png">
+
 
 See ➤ [What is wimlib](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/README)
 Usage ➤ [Usage wimlib](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/Usage.pdf)
