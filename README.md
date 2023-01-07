@@ -32,7 +32,7 @@ git clone https://github.com/chris1111/Wimlib-Imagex-Package
 
 ### wimlib-imagex for macOS its a cross-platform Library wimlib to built it in macos
 - This program will built then install wimlib in /usr/local/
-- This program will allow you to create a Windows 11 Bootable USB key in macOS
+- This program will allow you to create a Windows 11 Bootable USB key in macOS using ➤ [ `Create-Windows-USB.tool` ]
 
 
 [See Video Built in macOS Ventura 13](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/Video%20Page.md)
@@ -44,4 +44,6 @@ git clone https://github.com/chris1111/Wimlib-Imagex-Package
 
 ### SIP Security and Gatekeeper must be disable
 - WINUSB is bootable only in UEFI ( 🚫  Not working in Legacy booting )
+
+#### Uninstallation of wimlib use ➤ [ `Uninstall-Package.tool` ]
 
