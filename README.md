@@ -19,6 +19,7 @@
 <img width="128" alt="Instruments" src="https://user-images.githubusercontent.com/6248794/210024502-622f67b8-4318-40c2-9748-43ab72e6eea7.png">
 
 See ➤ [What is wimlib](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/README)
+Usage ➤ [Usage wimlib](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/Usage.pdf)
 
 - [x] `Usage`
 
