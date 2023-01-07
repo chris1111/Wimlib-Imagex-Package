@@ -21,7 +21,21 @@ echo "======================================================" >> "$install_log"
 
 
 response=$(osascript -e 'tell app "System Events" to display dialog "
-Welcome Install-Wimlib-macOS
+Uninstall Wimlib-Imagex-Package
+You are about to Uninstall
+
+/usr/local/bin/ ➤ mkwinpeimg, wimappend, wimapply, wimcapture, wimdelete, wimdir, wimexport, wimextract, wiminfo, wimjoin, wimlib-imagex, wimmount, wimmountrw, wimoptimize, wimunmount, wimupdate, wimverify
+
+/usr/local/share/man/ ➤ man1, man3
+/usr/local/etc/ ➤ libxml2, openssl@3
+
+/usr/local/opt/ ➤ libxml2, wimlib, openssl@3, openssl
+
+/usr/local/Cellar/ ➤ libxml2, wimlib, openssl@3, openssl
+
+/usr/local/include/ ➤ wimlib.h
+
+
 Please make a choice\nCancel for Exit" buttons {"Cancel", "Uninstall"} default button 2 with title "'"$apptitle"' '"$version"'" with icon POSIX file "'"$iconfile"'"  ')
 
 

@@ -23,7 +23,13 @@ echo "Wimlib-Imagex-Package log - $( date )" >> "$install_log"
 echo "======================================================" >> "$install_log"
 
 response=$(osascript -e 'tell app "System Events" to display dialog "
-Welcome Install-Wimlib-macOS
+Welcome Wimlib-Imagex-Package
+You are about to install
+
+/usr/local/etc/libxml2, openssl@3
+/usr/local/Cellar/wimlib, libxml2, openssl@3
+/usr/local/bin/wimlib-imagex
+
 Please make a choice\nCancel for Exit" buttons {"Cancel", "Wimlib-Imagex-Package"} default button 2 with title "'"$apptitle"' '"$version"'" with icon POSIX file "'"$iconfile"'"  ')
 
 

@@ -23,7 +23,7 @@ Attach Windows image OK!
 EOD
 
 response=$(osascript -e 'tell app "System Events" to display dialog "
-Create Windows USB Start
+Welcome Create Windows USB
 Please make a choice\nCancel for Exit" buttons {"Cancel", "Create Windows USB"} default button 2 with title "'"$apptitle"' '"$version"'" with icon POSIX file "'"$iconfile"'"  ')
 
 
