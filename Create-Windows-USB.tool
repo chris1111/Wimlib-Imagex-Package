@@ -24,13 +24,13 @@ EOD
 
 response=$(osascript -e 'tell app "System Events" to display dialog "
 Create Windows USB Start
-Please make a choice\nCancel for Exit" buttons {"Cancel", "Wimlib-Imagex-Package"} default button 2 with title "'"$apptitle"' '"$version"'" with icon POSIX file "'"$iconfile"'"  ')
-
-action=$(echo $response | cut -d ':' -f2)
+Please make a choice\nCancel for Exit" buttons {"Cancel", "Create Windows USB"} default button 2 with title "'"$apptitle"' '"$version"'" with icon POSIX file "'"$iconfile"'"  ')
 
 
+answer=$(echo $response | grep "Create Windows USB")
 
-# Cancel is user does not select OK
+
+# Cancel is user does not select Create Windows USB
 if [ ! "$answer" ] ; then
   Umount -f /Volumes/WIN
   osascript -e 'display notification "Program closing" with title "'"$apptitle"'" subtitle "User cancelled"'

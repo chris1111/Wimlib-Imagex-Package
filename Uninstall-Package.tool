@@ -27,7 +27,7 @@ Please make a choice\nCancel for Exit" buttons {"Cancel", "Uninstall"} default b
 
 answer=$(echo $response | grep "Uninstall")
 
-# Cancel is user does not select OK
+# Cancel is user does not select Uninstall
 if [ ! "$answer" ] ; then
   osascript -e 'display notification "Program closing" with title "'"$apptitle"'" subtitle "User cancelled"'
   exit 0
