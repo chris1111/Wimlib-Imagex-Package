@@ -2,11 +2,22 @@
 # Wimlib-Imagex-Package uninstaller
 # By chris1111
 # Vars
+dir="$HOME/WimlibDev/Wimlib-Imagex-Package"
+install_log="$HOME/WimlibDev/Wimlib-Imagex-Package/Uninstall-Package.txt"
+rm -rf $install_log
 apptitle="Wimlib-Imagex-Package uninstaller"
 version="1.0"
 # Set Icon directory and file 
 iconfile="/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/com.apple.imac-aluminum-20.icns"
 Sleep 1
+
+# ---------------------------------------------
+# Creating log file
+# ---------------------------------------------
+echo "" > "$install_log"
+echo "======================================================" >> "$install_log"
+echo "Wimlib-Imagex-Package log - $( date )" >> "$install_log"
+echo "======================================================" >> "$install_log"
 
 
 response=$(osascript -e 'tell app "System Events" to display dialog "
@@ -26,6 +37,7 @@ fi
 echo "Prepare --> Uninstall wimlib"
 Sleep 2
 echo "⬇︎ Type your password to continue"
+{
 sudo rm -rf /usr/local/bin/mkwinpeimg
 sudo rm -rf /usr/local/bin/wimappend
 sudo rm -rf /usr/local/bin/wimapply
@@ -56,6 +68,40 @@ sudo rm -rf /usr/local/include/wimlib.h
 sudo rm -rf /usr/local/Cellar
 
 echo "=============================================" 
+echo "↓ Uninstall
+
+/usr/local/bin/mkwinpeimg
+/usr/local/bin/wimappend
+/usr/local/bin/wimapply
+/usr/local/bin/wimcapture
+/usr/local/bin/wimdelete
+/usr/local/bin/wimdir
+/usr/local/bin/wimexport
+/usr/local/bin/wimextract
+/usr/local/bin/wiminfo
+/usr/local/bin/wimjoin
+/usr/local/bin/wimlib-imagex
+/usr/local/bin/wimmount
+/usr/local/bin/wimmountrw
+/usr/local/bin/wimoptimize
+/usr/local/bin/wimunmount
+/usr/local/bin/wimupdate
+/usr/local/bin/wimverify
+/usr/local/share/man/man1/*
+/usr/local/share/man/man3/*
+/usr/local/etc/libxml2
+/usr/local/etc/openssl@3
+/usr/local/opt/libxml2
+/usr/local/opt/wimlib
+/usr/local/opt/openssl@3
+/usr/local/opt/openssl
+/usr/local/include/wimlib.h
+/usr/local/Cellar
+" 
+echo "=============================================" 
+
+echo "=============================================" 
 echo "Uninstall Completed" 
 echo "=============================================" 
- 
+
+} | tee "${install_log}"

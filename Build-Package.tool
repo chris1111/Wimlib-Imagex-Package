@@ -64,7 +64,7 @@ Sleep 2
     export LIBXML2_LIBS="/usr/local/Cellar/libxml2/2.10.3_1/include" 
     export OPENSSL_CFLAGS="-L/usr/local/Cellar/openssl@3/3.0.7/lib"
     export OPENSSL_LIBS="/usr/local/Cellar/openssl@3/3.0.7/include"
-    export PKG_CONFIG_PATH="/usr/lib/pkgconfig"
+    export PKG_CONFIG_PATH=/usr/local/Cellat/wimlib/1.13.6/lib
     ./configure --prefix=/usr/local CC=$CC --without-ntfs-3g --without-fuse --prefix=/usr/local/Cellar/wimlib/1.13.6
     make
     sudo make install
@@ -75,6 +75,7 @@ Sleep 2
     sudo ln -s /usr/local/Cellar/wimlib/1.13.6/bin/* /usr/local/bin
     sudo cp -Rp ./libwim.15.dylib /usr/local/Cellar/wimlib/1.13.6/lib
     sudo cp -Rp /usr/local/Cellar/wimlib/1.13.6/share/man /usr/local/share/
+    echo $PKG_CONFIG_PATH
     Umount -f /Volumes/Library-wimlib
     echo "=============================================" 
     echo "Your path --> /usr/local/bin ➤ wimlib-imagex" 
@@ -123,6 +124,3 @@ esac
 done
 
 Open $install_log
-
-
-
