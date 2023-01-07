@@ -7,8 +7,8 @@
 - Wimlib-Imagex for macOS, working from macOS Catalina 10.15 to macOS Ventura 13
 - Working for Hackintosh and real Mac
 
+#### Prerequisite: Command Line Tools (CLT) for Xcode (from `xcode-select --install` or [Developer Apple Command Line Tools](https://developer.apple.com/download/all/)
 
-#### Prerequisite: Command Line Tools (CLT) for Xcode (from `xcode-select --install` or https://developer.apple.com/download/all/)
 - If you have Xcode installed that's also good
 - A 64-bit Intel CPU
 ### Prerequisite for installing Windows
