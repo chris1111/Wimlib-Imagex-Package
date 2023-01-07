@@ -27,6 +27,8 @@ Welcome Install-Wimlib-macOS
 Please make a choice\nCancel for Exit" buttons {"Cancel", "Wimlib-Imagex-Package"} default button 2 with title "'"$apptitle"' '"$version"'" with icon POSIX file "'"$iconfile"'"  ')
 
 
+action=$(echo $response | cut -d ':' -f2)
+
 answer=$(echo $response | grep "Wimlib-Imagex-Package")
 
 # Cancel is user does not select OK
