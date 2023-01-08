@@ -75,7 +75,7 @@ Some uncommon options are not listed; see `man wimlib-imagex` for more details.
     wimlib-imagex --help
     wimlib-imagex --version
 
-IMAGE can be the 1-based index or name of an image in the WIM file.
-For some commands IMAGE is optional if the WIM file only contains one image.
-For some commands IMAGE may be "all".
+#### IMAGE can be the 1-based index or name of an image in the WIM file.
+#### For some commands IMAGE is optional if the WIM file only contains one image.
+#### For some commands IMAGE may be "all".
 
