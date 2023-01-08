@@ -1,6 +1,7 @@
 #!/bin/bash
 # Wimlib-Imagex-Package
 # By chris1111
+# Copyright (c) 2022, chris1111. All Right Reserved
 # Credit: wimlib https://wimlib.net/ 
 # Credit: Homebrew https://github.com/homebrew
 # Vars

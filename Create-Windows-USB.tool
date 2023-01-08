@@ -1,6 +1,7 @@
 #!/bin/bash
 # Create-Windows
 # By chris1111
+# Copyright (c) 2022, chris1111. All Right Reserved
 # Vars
 apptitle="Create-Windows"
 version="1.0"

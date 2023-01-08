@@ -1,6 +1,7 @@
 #!/bin/bash
 # Wimlib-Imagex-Package uninstaller
 # By chris1111
+# Copyright (c) 2022, chris1111. All Right Reserved
 # Vars
 dir="$HOME/WimlibDev/Wimlib-Imagex-Package"
 install_log="$HOME/WimlibDev/Wimlib-Imagex-Package/Uninstall-Package.txt"
