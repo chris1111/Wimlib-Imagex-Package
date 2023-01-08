@@ -1,0 +1,6 @@
+title: Wimlib-Imagex-Package
+description: Wimlib-Imagex for macOS, working from macOS Catalina 10.15 to macOS Ventura 13
+wimlib is a C library for creating, modifying, extracting, and mounting files in the Windows Imaging Format (WIM files).
+github:
+  repository_url: https://github.com/chris1111/Wimlib-Imagex-Package
+remote_theme: chris1111/cayman-dark
