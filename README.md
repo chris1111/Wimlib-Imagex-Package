@@ -22,7 +22,7 @@ The files in this repository are from the [Official wimlib site Release-v-1.13.6
 <img width="128" alt="logo" src="https://user-images.githubusercontent.com/6248794/211173953-4df687de-26e9-40b8-9053-62be4f1a03f8.png">
 
 See ➤ [What is wimlib](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/README)
-Usage ➤ [Usage wimlib](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/Usage.pdf)
+Usage ➤ [Usage: wimlib-imagex](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/Usage-wimlib-imagex.md)
 
 
 - [x] `Installation`
