@@ -19,7 +19,9 @@ The files in this repository are from the [Official wimlib site Release-v-1.13.6
 ### Prerequisite for installing Windows
 - USB key of 8 Gig and more
 - Windows ISO image X64 download from ➤ [Microsoft](https://www.microsoft.com/en-us/software-download/windows11)
-- Using ➤ [ `Create-Windows-USB.tool` ] inside the program
+- Using ➤ [ `Create-Windows-USB.tool` ] inside the program 
+* Important Note: ⚠️ ➦ Make sure that Windows.iso is on your main disk and not on another disk otherwise you will get an error (47) failed to open file.
+
 
 See ➤ [What is wimlib](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/README)
 Usage ➤ [Usage: wimlib-imagex](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/Usage-wimlib-imagex.md)
