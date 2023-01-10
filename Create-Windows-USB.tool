@@ -44,13 +44,14 @@ rm -rf /Private/tmp/*.txt
 echo "
 --------------------------------------------------------------"
 echo "RSYNC --> Copy Windows, this wil take a while. . . Wait!"
-osascript -e 'do shell script "rsync -avh --progress --exclude=sources/install.wim /Volumes/WIN/ /Volumes/WINUSB" ' cat > /Private/tmp/Win11-USB-Rsync.txt
+echo "⬇︎ Type your password to continue"
+sudo osascript -e 'do shell script "rsync -avh --progress --exclude=sources/install.wim /Volumes/WIN/ /Volumes/WINUSB" ' cat > /Private/tmp/Win11-USB-Rsync.txt
 Sleep 2
 echo "Done ✅"
 echo "
 --------------------------------------------------------------"
 echo "Wimlib --> Split install.wim , this wil take a while. . . Wait!"
-osascript -e 'do shell script "/usr/local/bin/wimlib-imagex split /Volumes/WIN/sources/install.wim /Volumes/WINUSB/sources/install.swm 3500" ' cat > /Private/tmp/Win11-USB-Wimlib.txt
+sudo osascript -e 'do shell script "/usr/local/bin/wimlib-imagex split /Volumes/WIN/sources/install.wim /Volumes/WINUSB/sources/install.swm 3500" ' cat > /Private/tmp/Win11-USB-Wimlib.txt
 
 echo "WINUSB Create! All Done ✅"
 echo "
