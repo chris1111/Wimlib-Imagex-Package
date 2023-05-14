@@ -31,7 +31,7 @@ Usage ➤ [Usage: wimlib-imagex](https://github.com/chris1111/Wimlib-Imagex-Pack
 ```bash
 mkdir -p WimlibDev
 cd WimlibDev
-git clone https://github.com/chris1111/Wimlib-Imagex-Package
+git clone https://github.com/chris1111/Wimlib-Imagex-Package.git
 ./Wimlib-Imagex-Package/Build-Package.tool
 ```
 See Video Demonstartion ➤ [![Modular Image Creation](https://user-images.githubusercontent.com/6248794/211171949-884b17a1-8edc-435d-a2b0-272334068365.png)](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/Video%20Page.md)
