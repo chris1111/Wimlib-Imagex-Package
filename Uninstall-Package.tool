@@ -3,8 +3,8 @@
 # By chris1111
 # Copyright (c) 2022, chris1111. All Right Reserved
 # Vars
-dir="$HOME/WimlibDev/Wimlib-Imagex-Package"
-install_log="$HOME/WimlibDev/Wimlib-Imagex-Package/Uninstall-Package.txt"
+dir="$HOME/WimlibDev"
+install_log="$HOME/Desktop/Uninstall-Package.txt"
 rm -rf $install_log
 apptitle="Wimlib-Imagex-Package uninstaller"
 version="1.0"
@@ -35,6 +35,8 @@ You are about to Uninstall
 /usr/local/Cellar/ ➤ libxml2, wimlib, openssl@3, openssl
 
 /usr/local/include/ ➤ wimlib.h
+
+$HOME/WimlibDev
 
 
 Please make a choice\nCancel for Exit" buttons {"Cancel", "Uninstall"} default button 2 with title "'"$apptitle"' '"$version"'" with icon POSIX file "'"$iconfile"'"  ')
@@ -112,6 +114,7 @@ echo "↓ Uninstall
 /usr/local/opt/openssl
 /usr/local/include/wimlib.h
 /usr/local/Cellar
+$HOME/WimlibDev
 " 
 echo "=============================================" 
 
@@ -120,3 +123,7 @@ echo "Uninstall Completed"
 echo "=============================================" 
 
 } | tee "${install_log}"
+
+Open $HOME/Desktop/Uninstall-Package.txt
+Sleep 1
+rm -rf $dir
