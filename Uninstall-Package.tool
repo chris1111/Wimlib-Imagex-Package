@@ -126,4 +126,4 @@ echo "============================================="
 
 Open $HOME/Desktop/Uninstall-Package.txt
 Sleep 1
-rm -rf $dir
+sudo rm -rf $dir
