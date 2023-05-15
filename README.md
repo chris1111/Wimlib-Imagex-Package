@@ -38,7 +38,7 @@ See Video Demonstartion ➤ [![Modular Image Creation](https://user-images.githu
   
 ### Credit: 
 - Special thanks to ➤ [Wimlib](https://wimlib.net/) for Wimlib
-- Special thanks to ➤ [Homebrew](https://github.com/homebrew) for the build Library
+- Special thanks to ➤ [Homebrew](https://github.com/homebrew) for the build: libxml2, openssl@3 Library
 - Special thanks to ➤ [Tester djams](https://github.com/djams2904)
 - Apple for the Command Line Tools (CLT)
 
