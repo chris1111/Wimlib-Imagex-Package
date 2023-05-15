@@ -10,7 +10,7 @@ layout: default
 #### Important do not mix this program with that of Homebrew! Use Wimlib-Imagex-Package alone.
 The files in this repository are from the [Official wimlib site Release-v-1.14.1](https://wimlib.net/index.html)
 
-- Wimlib-Imagex for macOS, working from macOS Catalina 10.15 to macOS Ventura 13
+- Wimlib-Imagex for macOS, working from macOS Mojave 10.14 to macOS Ventura 13
 - Working for Hackintosh and real Mac
 - This program will built then install wimlib in `/usr/local/`
 
