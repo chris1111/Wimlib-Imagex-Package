@@ -10,13 +10,13 @@ path_basename(const tchar *path);
 const tchar *
 path_basename_with_len(const tchar *path, size_t len);
 
-extern const tchar *
+const tchar *
 path_stream_name(const tchar *path);
 
-extern void
+void
 do_canonicalize_path(const tchar *in, tchar *out);
 
-extern tchar *
+tchar *
 canonicalize_wim_path(const tchar *wim_path);
 
 /* is_any_path_separator() - characters treated as path separators in WIM path
@@ -32,7 +32,7 @@ canonicalize_wim_path(const tchar *wim_path);
  * Currently needs to be '/' on UNIX for the WIM mounting code to work properly.
  */
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #  define OS_PREFERRED_PATH_SEPARATOR L'\\'
 #  define is_any_path_separator(c) ((c) == L'/' || (c) == L'\\')
 #else

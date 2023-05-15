@@ -4,7 +4,7 @@
 /* Functions to act on "tchar" strings, which have a platform-dependent encoding
  * and character size. */
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #include <wchar.h>
 /*
  * For Windows builds, the "tchar" type will be 2 bytes and will be equivalent
@@ -39,6 +39,7 @@ typedef wchar_t tchar;
 #  define tstrchr	wcschr
 #  define tstrpbrk	wcspbrk
 #  define tstrrchr	wcsrchr
+#  define tstrstr	wcsstr
 #  define tstrlen	wcslen
 #  define tmemcmp	wmemcmp
 #  define tstrcasecmp   _wcsicmp
@@ -64,10 +65,11 @@ typedef wchar_t tchar;
  * function defined ourselves. */
 #  define TSTRDUP	WCSDUP
 #  define tmkdir(path, mode) _wmkdir(path)
-#  define tstrerror_r   win32_strerror_r_replacement
+#  define tstrerror_r(errnum, buf, bufsize) \
+			_wcserror_s((buf), (bufsize), (errnum))
 #  define trename	win32_rename_replacement
 #  define tglob		win32_wglob
-#else /* __WIN32__ */
+#else /* _WIN32 */
 /*
  * For non-Windows builds, the "tchar" type will be one byte and will specify a
  * string encoded in UTF-8 with the additional possibility of surrogate
@@ -101,6 +103,7 @@ typedef char tchar;
 #  define tstrchr	strchr
 #  define tstrpbrk	strpbrk
 #  define tstrrchr	strrchr
+#  define tstrstr	strstr
 #  define tstrlen	strlen
 #  define tmemcmp	memcmp
 #  define tstrcasecmp   strcasecmp
@@ -126,6 +129,6 @@ typedef char tchar;
 #  define trename	rename
 #  define taccess	access
 #  define tglob		glob
-#endif /* !__WIN32__ */
+#endif /* !_WIN32 */
 
 #endif /* _WIMLIB_TCHAR_H */

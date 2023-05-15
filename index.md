@@ -8,7 +8,7 @@ layout: default
 
 ## We use cross-platform Library wimlib to built it in macos.
 #### Important do not mix this program with that of Homebrew! Use Wimlib-Imagex-Package alone.
-The files in this repository are from the [Official wimlib site Release-v-1.13.6](https://wimlib.net/index.html)
+The files in this repository are from the [Official wimlib site Release-v-1.14.1](https://wimlib.net/index.html)
 
 - Wimlib-Imagex for macOS, working from macOS Catalina 10.15 to macOS Ventura 13
 - Working for Hackintosh and real Mac
@@ -35,7 +35,7 @@ Usage ➤ [Usage: wimlib-imagex](https://github.com/chris1111/Wimlib-Imagex-Pack
 ```bash
 mkdir -p WimlibDev
 cd WimlibDev
-git clone https://github.com/chris1111/Wimlib-Imagex-Package
+git clone https://github.com/chris1111/Wimlib-Imagex-Package.git
 ./Wimlib-Imagex-Package/Build-Package.tool
 ```
 See Video Demonstartion ➤ [![Modular Image Creation](https://user-images.githubusercontent.com/6248794/211171949-884b17a1-8edc-435d-a2b0-272334068365.png)](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/Video%20Page.md)

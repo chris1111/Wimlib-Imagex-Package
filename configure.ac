@@ -1,6 +1,6 @@
 ###############################################################################
 
-AC_INIT([wimlib], m4_esyscmd_s([tools/get-version-number]),
+AC_INIT([wimlib], m4_esyscmd_s([tools/get-version-number.sh]),
 	[https://wimlib.net/forums/])
 AC_CONFIG_SRCDIR([src/wim.c])
 AC_CONFIG_MACRO_DIR([m4])
@@ -10,6 +10,7 @@ AM_SILENT_RULES([yes])
 AC_C_BIGENDIAN
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 LT_INIT
+PKG_PROG_PKG_CONFIG
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile] [doc/Doxyfile] [wimlib.pc])
@@ -36,7 +37,7 @@ mingw*)
 	# Native Windows
 	WINDOWS_NATIVE_BUILD="yes"
 	# -D__MINGW_USE_VC2005_COMPAT: make time_t 64-bit on 32-bit Windows.
-	PLATFORM_CPPFLAGS="-D_POSIX -D_POSIX_THREAD_SAFE_FUNCTIONS -DUNICODE -D_UNICODE -D_CRT_NON_CONFORMING_SWPRINTFS -D__MINGW_USE_VC2005_COMPAT"
+	PLATFORM_CPPFLAGS="-D_POSIX -D_POSIX_THREAD_SAFE_FUNCTIONS -DUNICODE -D_UNICODE -D_CRT_NON_CONFORMING_SWPRINTFS -D__MINGW_USE_VC2005_COMPAT -D_WIN32_WINNT=0x0600"
 	PLATFORM_CFLAGS="-municode -mno-ms-bitfields"
 	PLATFORM_LDFLAGS="-no-undefined"
 	WITH_NTFS_3G_DEFAULT="no"
@@ -94,23 +95,14 @@ AC_CHECK_MEMBER([struct stat.st_mtim],
 		[],
 		[#include <sys/stat.h>])
 
-# Check for possible support for the Linux getrandom() system call
-AC_CHECK_DECL([__NR_getrandom],
-	      [AC_DEFINE([HAVE_NR_GETRANDOM], [1], [Define to 1 if the system
-	       headers define a system call number for getrandom()])],
-	      [],
-	      [#include <sys/syscall.h>])
-
 ###############################################################################
 #			     Required libraries				      #
 ###############################################################################
 
 # ------------------------------ pthreads -------------------------------------
-AX_PTHREAD([], [AC_MSG_ERROR(["cannot find pthreads library"])])
-
-# ------------------------------ libxml2 --------------------------------------
-PKG_CHECK_MODULES([LIBXML2], [libxml-2.0])
-PKGCONFIG_PRIVATE_REQUIRES="$PKGCONFIG_PRIVATE_REQUIRES libxml-2.0"
+if test "$WINDOWS_NATIVE_BUILD" != "yes"; then
+	AX_PTHREAD([], [AC_MSG_ERROR(["cannot find pthreads library"])])
+fi
 
 ###############################################################################
 #			  Configuration options				      #
@@ -147,7 +139,7 @@ AM_CONDITIONAL([WITH_NTFS_3G], [test "$WITH_NTFS_3G" = "yes"])
 AC_MSG_CHECKING([whether to include support for mounting WIMs])
 AC_ARG_WITH([fuse],
 	    [AS_HELP_STRING([--without-fuse],
-			    [build without libfuse.  This will disable the
+			    [build without libfuse3.  This will disable the
 			     ability to mount WIM images.])],
 	    [WITH_FUSE=$withval],
 	    [WITH_FUSE=$WITH_FUSE_DEFAULT])
@@ -155,10 +147,10 @@ AC_MSG_RESULT([$WITH_FUSE])
 
 if test "$WITH_FUSE" = "yes"; then
 
-	PKG_CHECK_MODULES([LIBFUSE], [fuse], [],
-		[AC_MSG_ERROR([Cannot find libfuse!
-		Without libfuse, wimlib cannot include support for mounting WIM
-		images.  Either install libfuse, or configure --without-fuse to
+	PKG_CHECK_MODULES([LIBFUSE], [fuse3], [],
+		[AC_MSG_ERROR([Cannot find libfuse3!
+		Without libfuse3, wimlib cannot include support for mounting WIM
+		images.  Either install libfuse3, or configure --without-fuse to
 		disable this feature.])])
 	PKGCONFIG_PRIVATE_REQUIRES="$PKGCONFIG_PRIVATE_REQUIRES fuse"
 	AC_DEFINE([WITH_FUSE], [1], [Define to 1 if using FUSE support])
@@ -174,53 +166,6 @@ if test "$WITH_FUSE" = "yes"; then
 	AC_SUBST([LIBRT_LIBS], [-lrt])
 fi
 AM_CONDITIONAL([WITH_FUSE], [test "$WITH_FUSE" = "yes"])
-
-# ------------------------ SHA-1 implementation ---------------------------------
-
-AC_MSG_CHECKING([whether to use SSSE3-accelerated SHA-1])
-AC_ARG_ENABLE([ssse3-sha1],
-	      [AS_HELP_STRING([--enable-ssse3-sha1],
-			      [Include SSSE3-accelerated SHA-1 implementation by
-			       Intel.  This implies --without-libcrypto.])],
-	      [ENABLE_SSSE3_SHA1=$enableval],
-	      [ENABLE_SSSE3_SHA1=no])
-AC_MSG_RESULT([$ENABLE_SSSE3_SHA1])
-
-if test "$ENABLE_SSSE3_SHA1" = "yes" ; then
-	AC_DEFINE([ENABLE_SSSE3_SHA1], [1],
-		  [Define to 1 if using SSSE3 implementation of SHA-1])
-	AC_PROG_NASM
-	NASM_SYMBOL_PREFIX=""
-	NASM_PLATFORM_FLAGS=""
-	if test "$WINDOWS_NATIVE_BUILD" = "yes"; then
-		NASM_PLATFORM_FLAGS="-DWIN_ABI"
-	fi
-	case "$host_os" in
-	darwin* | rhapsody* | nextstep* | openstep* | macos*)
-		NASM_SYMBOL_PREFIX="_"
-		;;
-	esac
-	AC_SUBST([NASM_PLATFORM_FLAGS], [$NASM_PLATFORM_FLAGS])
-	AC_SUBST([NASM_SYMBOL_PREFIX], [$NASM_SYMBOL_PREFIX])
-else
-	AC_MSG_CHECKING([whether to use SHA-1 implementation from system libcrypto])
-	AC_ARG_WITH([libcrypto],
-		    [AS_HELP_STRING([--without-libcrypto],
-				    [build in the SHA-1 algorithm, rather than
-				     use external libcrypto from OpenSSL
-				     (default is autodetect)])],
-		    [WITH_LIBCRYPTO=$withval],
-		    [WITH_LIBCRYPTO=auto])
-	AC_MSG_RESULT([$WITH_LIBCRYPTO])
-	if test "$WITH_LIBCRYPTO" != "no"; then
-		PKG_CHECK_MODULES([LIBCRYPTO], [libcrypto], [
-			PKGCONFIG_PRIVATE_REQUIRES="$PKGCONFIG_PRIVATE_REQUIRES libcrypto"
-			AC_DEFINE([WITH_LIBCRYPTO], [1],
-				  [Define to 1 if using libcrypto SHA-1])
-		], [AC_MSG_WARN([Cannot find libcrypto: using stand-alone SHA-1 code instead])])
-	fi
-fi
-AM_CONDITIONAL([ENABLE_SSSE3_SHA1], [test "$ENABLE_SSSE3_SHA1" = "yes"])
 
 # ----------------------------- Other options ---------------------------------
 

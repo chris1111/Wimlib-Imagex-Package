@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -70,8 +70,8 @@ wim_timestamp_to_wimlib_timespec(u64 timestamp, struct wimlib_timespec *wts,
 		*high_part_ret = sec >> 32;
 }
 
-#ifdef __WIN32__
-static _unused_attribute void
+#ifdef _WIN32
+static void __attribute__((unused))
 check_sizeof_time_t(void)
 {
 	/* Windows builds should always be using 64-bit time_t now. */
@@ -95,6 +95,7 @@ wim_timestamp_to_timespec(u64 timestamp)
 		.tv_nsec = (timestamp % TICKS_PER_SECOND) * NANOSECONDS_PER_TICK,
 	};
 }
+#endif /* !_WIN32 */
 
 /* UNIX timestamps to Windows NT timestamps  */
 
@@ -104,6 +105,7 @@ time_t_to_wim_timestamp(time_t t)
 	return ((u64)t + EPOCH_DISTANCE) * TICKS_PER_SECOND;
 }
 
+#ifndef _WIN32
 u64
 timeval_to_wim_timestamp(const struct timeval *tv)
 {
@@ -127,7 +129,7 @@ now_as_wim_timestamp(void)
 	gettimeofday(&tv, NULL);
 	return timeval_to_wim_timestamp(&tv);
 }
-#endif /* !__WIN32__ */
+#endif /* !_WIN32 */
 
 /* Translate a WIM timestamp into a human-readable string.  */
 void

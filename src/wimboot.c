@@ -3,8 +3,8 @@
  *
  * Support for creating WIMBoot pointer files.
  *
- * See http://technet.microsoft.com/en-us/library/dn594399.aspx for general
- * information about WIMBoot.
+ * For general information about WIMBoot, see
+ * https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-8.1-and-8/dn594399(v=win.10)
  *
  * Note that WIMBoot pointer files are actually implemented on top of the
  * Windows Overlay Filesystem filter (WOF).  See wof.h for more info.
@@ -24,10 +24,10 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1120,4 +1120,4 @@ wimboot_set_pointer(HANDLE h,
 	return true;
 }
 
-#endif /* __WIN32__ */
+#endif /* _WIN32 */

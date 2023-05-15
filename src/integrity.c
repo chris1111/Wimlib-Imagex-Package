@@ -20,7 +20,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -52,14 +52,14 @@ struct integrity_table {
 	u32 num_entries;
 	u32 chunk_size;
 	u8  sha1sums[][20];
-} _packed_attribute;
+} __attribute__((packed));
 
 static int
 calculate_chunk_sha1(struct filedes *in_fd, size_t this_chunk_size,
 		     off_t offset, u8 sha1_md[])
 {
 	u8 buf[BUFFER_SIZE];
-	SHA_CTX ctx;
+	struct sha1_ctx ctx;
 	size_t bytes_remaining;
 	size_t bytes_to_read;
 	int ret;
@@ -78,7 +78,7 @@ calculate_chunk_sha1(struct filedes *in_fd, size_t this_chunk_size,
 		bytes_remaining -= bytes_to_read;
 		offset += bytes_to_read;
 	} while (bytes_remaining);
-	sha1_final(sha1_md, &ctx);
+	sha1_final(&ctx, sha1_md);
 	return 0;
 }
 

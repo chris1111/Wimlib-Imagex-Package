@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2012, 2013 Eric Biggers
+ * Copyright 2012-2023 Eric Biggers
  *
  * This file is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -79,13 +79,25 @@ read_metadata_resource(struct wim_image_metadata *imd)
 
 	metadata_blob = imd->metadata_blob;
 
+	/*
+	 * Prevent huge memory allocations when processing fuzzed files.  The
+	 * case of metadata resources is tough, since a metadata resource can
+	 * legitimately decompress to many times the size of the WIM file
+	 * itself, e.g. in the case of an image containing many empty files with
+	 * similar long filenames.  Arbitrarily choose 512x as a generous limit.
+	 */
+	if (metadata_blob->blob_location == BLOB_IN_WIM &&
+	    metadata_blob->rdesc->wim->file_size > 0 &&
+	    metadata_blob->size / 512 > metadata_blob->rdesc->wim->file_size)
+		return WIMLIB_ERR_INVALID_METADATA_RESOURCE;
+
 	/* Read the metadata resource into memory.  (It may be compressed.)  */
 	ret = read_blob_into_alloc_buf(metadata_blob, &buf);
 	if (ret)
 		return ret;
 
 	/* Checksum the metadata resource.  */
-	sha1_buffer(buf, metadata_blob->size, hash);
+	sha1(buf, metadata_blob->size, hash);
 	if (!hashes_equal(metadata_blob->hash, hash)) {
 		ERROR("Metadata resource is corrupted "
 		      "(invalid SHA-1 message digest)!");

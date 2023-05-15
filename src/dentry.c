@@ -16,7 +16,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 /*
@@ -155,10 +155,10 @@ struct wim_dentry_on_disk {
 			le32 reparse_tag;
 			le16 rp_reserved;
 			le16 rp_flags;
-		} _packed_attribute reparse;
+		} __attribute__((packed)) reparse;
 		struct {
 			le64 hard_link_group_id;
-		} _packed_attribute nonreparse;
+		} __attribute__((packed)) nonreparse;
 	};
 
 	/* Number of extra stream entries that directly follow this dentry
@@ -194,9 +194,9 @@ struct wim_dentry_on_disk {
 	 * field) after 8-byte alignment, then the remaining space will be a
 	 * variable-length list of tagged metadata items.  See tagged_items.c
 	 * for more information.  */
-	/* u8 tagged_items[] _aligned_attribute(8); */
+	/* u8 tagged_items[] __attribute__((aligned(8))); */
 
-} _packed_attribute;
+} __attribute__((packed));
 	/* If num_extra_streams != 0, then there are that many extra stream
 	 * entries following the dentry, starting on the next 8-byte aligned
 	 * boundary.  They are not counted in the 'length' field of the dentry.
@@ -226,7 +226,7 @@ struct wim_extra_stream_entry_on_disk {
 	 * the null terminator.  There is a null terminator character if
 	 * @name_nbytes != 0; i.e., if this stream is named.  */
 	utf16lechar name[];
-} _packed_attribute;
+} __attribute__((packed));
 
 static void
 do_dentry_set_name(struct wim_dentry *dentry, utf16lechar *name,
@@ -607,7 +607,7 @@ collate_dentry_names(const struct avl_tree_node *n1,
  * WIMLIB_INIT_FLAG_DEFAULT_CASE_SENSITIVE or
  * WIMLIB_INIT_FLAG_DEFAULT_CASE_INSENSITIVE to wimlib_global_init().  */
 bool default_ignore_case =
-#ifdef __WIN32__
+#ifdef _WIN32
 	true
 #else
 	false

@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -169,7 +169,7 @@ struct lzms_item {
 #define DELTA_SOURCE_POWER_SHIFT	28
 #define DELTA_SOURCE_RAW_OFFSET_MASK	(((u32)1 << DELTA_SOURCE_POWER_SHIFT) - 1)
 
-static _unused_attribute void
+static void __attribute__((unused))
 check_that_powers_fit_in_bitfield(void)
 {
 	STATIC_ASSERT(LZMS_NUM_DELTA_POWER_SYMS <= (1 << (31 - DELTA_SOURCE_POWER_SHIFT)));
@@ -198,7 +198,7 @@ struct lzms_adaptive_state {
 	u8 lz_rep_states[LZMS_NUM_LZ_REP_DECISIONS];
 	u8 delta_state;
 	u8 delta_rep_states[LZMS_NUM_DELTA_REP_DECISIONS];
-} _aligned_attribute(64);
+} __attribute__((aligned(64)));
 
 /*
  * This structure represents a byte position in the preprocessed input data and
@@ -251,7 +251,7 @@ struct lzms_optimum_node {
 	 * maintained per-position and are only updated occasionally.
 	 */
 	struct lzms_adaptive_state state;
-} _aligned_attribute(64);
+} __attribute__((aligned(64)));
 
 /* The main compressor structure  */
 struct lzms_compressor {
@@ -975,7 +975,7 @@ static const u32 lzms_bit_costs[LZMS_PROBABILITY_DENOMINATOR + 1] = {
 	1
 };
 
-static _unused_attribute void
+static void __attribute__((unused))
 check_cost_shift(void)
 {
 	/* lzms_bit_costs is hard-coded to the current COST_SHIFT.  */

@@ -18,10 +18,10 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -330,7 +330,7 @@ read_winnt_stream_prefix(const struct windows_file *file,
 	};
 	HANDLE h;
 	NTSTATUS status;
-	u8 buf[BUFFER_SIZE] _aligned_attribute(8);
+	u8 buf[BUFFER_SIZE] __attribute__((aligned(8)));
 	u64 bytes_remaining;
 	int ret;
 
@@ -512,7 +512,7 @@ winnt_get_short_name(HANDLE h, struct wim_dentry *dentry)
 	 * course has to create its own handle.  */
 	NTSTATUS status;
 	IO_STATUS_BLOCK iosb;
-	u8 buf[128] _aligned_attribute(8);
+	u8 buf[128] __attribute__((aligned(8)));
 	const FILE_NAME_INFORMATION *info;
 
 	status = NtQueryInformationFile(h, &iosb, buf, sizeof(buf),
@@ -537,7 +537,7 @@ winnt_load_security_descriptor(HANDLE h, struct wim_inode *inode,
 			       struct winnt_scan_ctx *ctx)
 {
 	SECURITY_INFORMATION requestedInformation;
-	u8 _buf[4096] _aligned_attribute(8);
+	u8 _buf[4096] __attribute__((aligned(8)));
 	u8 *buf;
 	ULONG bufsize;
 	ULONG len_needed;
@@ -705,7 +705,7 @@ winnt_load_xattrs(HANDLE h, struct wim_inode *inode,
 {
 	IO_STATUS_BLOCK iosb;
 	NTSTATUS status;
-	u8 _buf[1024] _aligned_attribute(4);
+	u8 _buf[1024] __attribute__((aligned(4)));
 	u8 *buf = _buf;
 	const FILE_FULL_EA_INFORMATION *ea;
 	struct wim_xattr_entry *entry;
@@ -1321,22 +1321,17 @@ winnt_scan_data_stream(wchar_t *raw_stream_name, size_t raw_stream_name_nchars,
  * Load information about the data streams of an open file into a WIM inode.
  *
  * We use the NtQueryInformationFile() system call instead of FindFirstStream()
- * and FindNextStream().  This is done for two reasons:
- *
- * - FindFirstStream() opens its own handle to the file or directory and
- *   apparently does so without specifying FILE_FLAG_BACKUP_SEMANTICS, thereby
- *   causing access denied errors on certain files (even when running as the
- *   Administrator).
- * - FindFirstStream() and FindNextStream() is only available on Windows Vista
- *   and later, whereas the stream support in NtQueryInformationFile() was
- *   already present in Windows XP.
+ * and FindNextStream(), since FindFirstStream() opens its own handle to the
+ * file or directory and apparently does so without specifying
+ * FILE_FLAG_BACKUP_SEMANTICS.  This causing access denied errors on certain
+ * files, even when running as the Administrator.
  */
 static noinline_for_stack int
 winnt_scan_data_streams(HANDLE h, struct wim_inode *inode, u64 file_size,
 			struct winnt_scan_ctx *ctx)
 {
 	int ret;
-	u8 _buf[4096] _aligned_attribute(8);
+	u8 _buf[4096] __attribute__((aligned(8)));
 	u8 *buf;
 	size_t bufsize;
 	IO_STATUS_BLOCK iosb;
@@ -1659,7 +1654,8 @@ get_file_info(HANDLE h, struct file_info *info)
 static void
 get_volume_information(HANDLE h, struct winnt_scan_ctx *ctx)
 {
-	u8 _attr_info[sizeof(FILE_FS_ATTRIBUTE_INFORMATION) + 128] _aligned_attribute(8);
+	u8 _attr_info[sizeof(FILE_FS_ATTRIBUTE_INFORMATION) + 128]
+		__attribute__((aligned(8)));
 	FILE_FS_ATTRIBUTE_INFORMATION *attr_info = (void *)_attr_info;
 	FILE_FS_VOLUME_INFORMATION vol_info;
 	struct file_info file_info;
@@ -3051,4 +3047,4 @@ out:
 	return ret;
 }
 
-#endif /* __WIN32__ */
+#endif /* _WIN32 */

@@ -40,7 +40,7 @@ enum blob_location {
 	BLOB_IN_NTFS_VOLUME,
 #endif
 
-#ifdef __WIN32__
+#ifdef _WIN32
 	/* Windows only: the blob's data is available in the file (or named data
 	 * stream) specified by @windows_file.  The data might be only properly
 	 * accessible through the Windows API.  */
@@ -265,79 +265,79 @@ struct blob_descriptor {
 	};
 };
 
-extern struct blob_table *
+struct blob_table *
 new_blob_table(size_t capacity);
 
-extern void
+void
 free_blob_table(struct blob_table *table);
 
-extern int
+int
 read_blob_table(WIMStruct *wim);
 
-extern int
+int
 write_blob_table_from_blob_list(struct list_head *blob_list,
 				struct filedes *out_fd,
 				u16 part_number,
 				struct wim_reshdr *out_reshdr,
 				int write_resource_flags);
 
-extern struct blob_descriptor *
+struct blob_descriptor *
 new_blob_descriptor(void);
 
-extern struct blob_descriptor *
+struct blob_descriptor *
 clone_blob_descriptor(const struct blob_descriptor *blob);
 
-extern void
+void
 blob_decrement_refcnt(struct blob_descriptor *blob, struct blob_table *table);
 
-extern void
+void
 blob_subtract_refcnt(struct blob_descriptor *blob, struct blob_table *table,
 		     u32 count);
 
 #ifdef WITH_FUSE
-extern void
+void
 blob_decrement_num_opened_fds(struct blob_descriptor *blob);
 #endif
 
-extern void
+void
 blob_release_location(struct blob_descriptor *blob);
 
-extern void
+void
 free_blob_descriptor(struct blob_descriptor *blob);
 
-extern void
+void
 blob_table_insert(struct blob_table *table, struct blob_descriptor *blob);
 
-extern void
+void
 blob_table_unlink(struct blob_table *table, struct blob_descriptor *blob);
 
-extern struct blob_descriptor *
+struct blob_descriptor *
 lookup_blob(const struct blob_table *table, const u8 *hash);
 
-extern int
+int
 for_blob_in_table(struct blob_table *table,
 		  int (*visitor)(struct blob_descriptor *, void *), void *arg);
 
-extern int
+int
 for_blob_in_table_sorted_by_sequential_order(struct blob_table *table,
 					     int (*visitor)(struct blob_descriptor *, void *),
 					     void *arg);
 
 struct wimlib_resource_entry;
 
-extern void
+void
 blob_to_wimlib_resource_entry(const struct blob_descriptor *blob,
 			      struct wimlib_resource_entry *wentry);
 
-extern int
+int
 sort_blob_list(struct list_head *blob_list, size_t list_head_offset,
 	       int (*compar)(const void *, const void*));
 
-extern int
+int
 sort_blob_list_by_sequential_order(struct list_head *blob_list,
 				   size_t list_head_offset);
 
-extern int
+int
 cmp_blobs_by_sequential_order(const void *p1, const void *p2);
 
 static inline const struct blob_extraction_target *
@@ -384,41 +384,41 @@ static inline bool
 blob_is_in_file(const struct blob_descriptor *blob)
 {
 	return blob->blob_location == BLOB_IN_FILE_ON_DISK
-#ifdef __WIN32__
+#ifdef _WIN32
 	    || blob->blob_location == BLOB_IN_WINDOWS_FILE
 #endif
 	   ;
 }
 
-#ifdef __WIN32__
-extern const wchar_t *
+#ifdef _WIN32
+const wchar_t *
 get_windows_file_path(const struct windows_file *file);
 #endif
 
 static inline const tchar *
 blob_file_path(const struct blob_descriptor *blob)
 {
-#ifdef __WIN32__
+#ifdef _WIN32
 	if (blob->blob_location == BLOB_IN_WINDOWS_FILE)
 		return get_windows_file_path(blob->windows_file);
 #endif
 	return blob->file_on_disk;
 }
 
-extern struct blob_descriptor *
+struct blob_descriptor *
 new_blob_from_data_buffer(const void *buffer, size_t size,
 			  struct blob_table *blob_table);
 
-extern struct blob_descriptor *
+struct blob_descriptor *
 after_blob_hashed(struct blob_descriptor *blob,
 		  struct blob_descriptor **back_ptr,
 		  struct blob_table *blob_table, struct wim_inode *inode);
 
-extern int
+int
 hash_unhashed_blob(struct blob_descriptor *blob, struct blob_table *blob_table,
 		   struct blob_descriptor **blob_ret);
 
-extern struct blob_descriptor **
+struct blob_descriptor **
 retrieve_pointer_to_unhashed_blob(struct blob_descriptor *blob);
 
 static inline void

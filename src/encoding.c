@@ -1,7 +1,7 @@
 /*
  * encoding.c - UTF-8 and UTF-16LE codecs and utility functions
  *
- * Copyright (C) 2012-2016 Eric Biggers
+ * Copyright 2012-2023 Eric Biggers
  *
  * This file is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -220,8 +220,7 @@ convert_string(const u8 * const in, const size_t in_nbytes,
 	       decode_codepoint_fn decode_codepoint,
 	       encode_codepoint_fn encode_codepoint)
 {
-	const u8 * const in_end = in + in_nbytes;
-	const u8 *p_in;
+	size_t i;
 	u8 *p_out;
 	size_t out_nbytes = 0;
 	u8 *out;
@@ -229,8 +228,8 @@ convert_string(const u8 * const in, const size_t in_nbytes,
 	u32 c;
 
 	/* Validate the input string and compute the output size. */
-	for (p_in = in; p_in != in_end; ) {
-		p_in += (*decode_codepoint)(p_in, in_end - p_in, true, &c);
+	for (i = 0; i < in_nbytes; ) {
+		i += (*decode_codepoint)(&in[i], in_nbytes - i, true, &c);
 		if (unlikely(c == INVALID_CODEPOINT)) {
 			errno = EILSEQ;
 			return ilseq_err;
@@ -244,8 +243,9 @@ convert_string(const u8 * const in, const size_t in_nbytes,
 		return WIMLIB_ERR_NOMEM;
 
 	/* Do the conversion. */
-	for (p_in = in, p_out = out; p_in != in_end; ) {
-		p_in += (*decode_codepoint)(p_in, in_end - p_in, false, &c);
+	p_out = out;
+	for (i = 0; i < in_nbytes; ) {
+		i += (*decode_codepoint)(&in[i], in_nbytes - i, false, &c);
 		p_out += (*encode_codepoint)(c, p_out);
 	}
 
@@ -462,3 +462,22 @@ utf16le_len_chars(const utf16lechar *s)
 {
 	return utf16le_len_bytes(s) / sizeof(utf16lechar);
 }
+
+#ifdef ENABLE_TEST_SUPPORT
+
+#include "wimlib/test_support.h"
+
+WIMLIBAPI int
+wimlib_utf8_to_utf16le(const char *in, size_t in_nbytes,
+		       utf16lechar **out_ret, size_t *out_nbytes_ret)
+{
+	return utf8_to_utf16le(in, in_nbytes, out_ret, out_nbytes_ret);
+}
+
+WIMLIBAPI int
+wimlib_utf16le_to_utf8(const utf16lechar *in, size_t in_nbytes,
+		       char **out_ret, size_t *out_nbytes_ret)
+{
+	return utf16le_to_utf8(in, in_nbytes, out_ret, out_nbytes_ret);
+}
+#endif /* ENABLE_TEST_SUPPORT */

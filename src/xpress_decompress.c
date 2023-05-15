@@ -19,7 +19,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 
@@ -84,7 +84,7 @@ struct xpress_decompressor {
 	};
 	DECODE_TABLE_WORKING_SPACE(working_space, XPRESS_NUM_SYMBOLS,
 				   XPRESS_MAX_CODEWORD_LEN);
-} _aligned_attribute(DECODE_TABLE_ALIGNMENT);
+} __attribute__((aligned(DECODE_TABLE_ALIGNMENT)));
 
 static int
 xpress_decompress(const void *restrict compressed_data, size_t compressed_size,

@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2015-2021 Eric Biggers
+ * Copyright 2015-2023 Eric Biggers
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 /*
@@ -61,15 +61,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #ifdef WITH_NTFS_3G
 #  include <sys/wait.h>
 #endif
 #include <unistd.h>
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #  include <windows.h>
 #  include <winternl.h>
 #  include <ntstatus.h>
+#else
+#  include <linux/magic.h>
+#  include <sys/vfs.h>
 #endif
 
 #include "wimlib.h"
@@ -89,6 +93,9 @@
 static bool wimfile_in_use[MAX_NUM_WIMS];
 static int in_use_wimfile_indices[MAX_NUM_WIMS];
 static int num_wimfiles_in_use = 0;
+#ifndef _WIN32
+static u32 filesystem_type;
+#endif
 
 static void
 assertion_failed(int line, const char *format, ...)
@@ -119,16 +126,23 @@ assertion_failed(int line, const char *format, ...)
 static void
 change_to_temporary_directory(void)
 {
-#ifdef __WIN32__
-	ASSERT(SetCurrentDirectory(L"E:\\"),
-	       "failed to change directory to E:\\");
-#else
-	const char *tmpdir = getenv("TMPDIR");
-	if (!tmpdir)
-		tmpdir = P_tmpdir;
+#ifdef _WIN32
+	const wchar_t *tmpdir = _wgetenv(T("TMPDIR"));
+
+	ASSERT(tmpdir != NULL, "TMPDIR must be set");
+	_wmkdir(tmpdir);
+	ASSERT(!_wchdir(tmpdir),
+	       "failed to change to temporary directory '%ls'", tmpdir);
+#else /* _WIN32 */
+	const char *tmpdir = getenv("TMPDIR") ?: P_tmpdir;
+	struct statfs fs;
+
+	mkdir(tmpdir, 0700);
 	ASSERT(!chdir(tmpdir),
-	       "failed to change to temporary directory \"%s\": %m", tmpdir);
-#endif
+	       "failed to change to temporary directory '%s': %m", tmpdir);
+	ASSERT(!statfs(".", &fs), "statfs of '%s' failed: %m", tmpdir);
+	filesystem_type = fs.f_type;
+#endif /* !_WIN32 */
 }
 
 static void __attribute__((unused))
@@ -186,19 +200,19 @@ create_ntfs_volume(const char *name)
 }
 #endif /* WITH_NTFS_3G */
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
-extern WINAPI NTSTATUS NtQueryDirectoryFile (HANDLE FileHandle,
-					     HANDLE Event,
-					     PIO_APC_ROUTINE ApcRoutine,
-					     PVOID ApcContext,
-					     PIO_STATUS_BLOCK IoStatusBlock,
-					     PVOID FileInformation,
-					     ULONG Length,
-					     FILE_INFORMATION_CLASS FileInformationClass,
-					     BOOLEAN ReturnSingleEntry,
-					     PUNICODE_STRING FileName,
-					     BOOLEAN RestartScan);
+WINAPI NTSTATUS NtQueryDirectoryFile(HANDLE FileHandle,
+				     HANDLE Event,
+				     PIO_APC_ROUTINE ApcRoutine,
+				     PVOID ApcContext,
+				     PIO_STATUS_BLOCK IoStatusBlock,
+				     PVOID FileInformation,
+				     ULONG Length,
+				     FILE_INFORMATION_CLASS FileInformationClass,
+				     BOOLEAN ReturnSingleEntry,
+				     PUNICODE_STRING FileName,
+				     BOOLEAN RestartScan);
 
 static void
 delete_directory_tree_recursive(HANDLE cur_dir, UNICODE_STRING *name)
@@ -300,7 +314,7 @@ delete_directory_tree(const wchar_t *name)
 	ASSERT(GetFileAttributes(name) == 0xFFFFFFFF, "Deletion didn't work!");
 }
 
-#else /* __WIN32__ */
+#else /* _WIN32 */
 
 static void
 delete_directory_tree_recursive(int dirfd, const char *name)
@@ -332,22 +346,28 @@ delete_directory_tree(const tchar *name)
 	delete_directory_tree_recursive(AT_FDCWD, name);
 }
 
-#endif /* !__WIN32__ */
+#endif /* !_WIN32 */
 
-static uint32_t
+static u64 random_state;
+
+static u32
 rand32(void)
 {
-	static uint64_t state;
-
-	/* A simple linear congruential generator  */
-	state = (state * 25214903917 + 11) & (((uint64_t)1 << 48) - 1);
-	return state >> 16;
+	/* A simple linear congruential generator */
+	random_state = (random_state * 25214903917 + 11) % (1ULL << 48);
+	return random_state >> 16;
 }
 
-static inline bool
+static bool
 randbool(void)
 {
-	return rand32() & 1;
+	return rand32() % 2;
+}
+
+static u64
+rand64(void)
+{
+	return ((u64)rand32() << 32) | rand32();
 }
 
 static tchar wimfile[32];
@@ -411,7 +431,7 @@ get_image_count(WIMStruct *wim)
 	return info.image_count;
 }
 
-#ifdef __WIN32__
+#ifdef _WIN32
 static bool
 is_wimboot_capable(WIMStruct *wim)
 {
@@ -426,7 +446,7 @@ is_wimboot_capable(WIMStruct *wim)
 		 (info.compression_type == WIMLIB_COMPRESSION_TYPE_LZX &&
 		  info.chunk_size == 32768));
 }
-#endif /* __WIN32__ */
+#endif /* _WIN32 */
 
 static void
 overwrite_wim(WIMStruct *wim)
@@ -498,7 +518,7 @@ get_random_write_flags(void)
 	return write_flags;
 }
 
-static uint32_t
+static u32
 get_random_chunk_size(int min_order, int max_order)
 {
 	return 1 << (min_order + (rand32() % (max_order - min_order + 1)));
@@ -511,8 +531,8 @@ op__create_new_wim(void)
 
 	const tchar *wimfile;
 	enum wimlib_compression_type ctype = WIMLIB_COMPRESSION_TYPE_NONE;
-	uint32_t chunk_size = 0;
-	uint32_t solid_chunk_size = 0;
+	u32 chunk_size = 0;
+	u32 solid_chunk_size = 0;
 	int write_flags;
 	WIMStruct *wim;
 
@@ -778,15 +798,17 @@ op__apply_and_capture_test(void)
 	} else
 #endif
 	{
-#ifdef __WIN32__
+#ifdef _WIN32
 		printf("applying in Windows mode\n");
 		cmp_flags |= WIMLIB_CMP_FLAG_WINDOWS_MODE;
-#else /* __WIN32__ */
+#else /* _WIN32 */
 		printf("applying in UNIX mode\n");
 		extract_flags |= WIMLIB_EXTRACT_FLAG_UNIX_DATA;
 		add_flags |= WIMLIB_ADD_FLAG_UNIX_DATA;
 		cmp_flags |= WIMLIB_CMP_FLAG_UNIX_MODE;
-#endif /* !__WIN32__ */
+		if (filesystem_type == EXT4_SUPER_MAGIC)
+			cmp_flags |= WIMLIB_CMP_FLAG_EXT4;
+#endif /* !_WIN32 */
 	}
 	add_flags |= WIMLIB_ADD_FLAG_NORPFIX;
 	CHECK_RET(wimlib_extract_image(wim, image, TMP_TARGET_NAME,
@@ -810,12 +832,17 @@ op__apply_and_capture_test(void)
 	wimlib_free(wim);
 }
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
-/* Enumerate and unregister all backing WIMs from the specified volume  */
+/*
+ * Enumerate and unregister all backing WIMs from the volume containing the
+ * current directory.
+ */
 static void
-unregister_all_backing_wims(const tchar drive_letter)
+unregister_all_backing_wims(void)
 {
+	wchar_t full_path[MAX_PATH];
+	DWORD path_len;
 	wchar_t volume[7];
 	HANDLE h;
 	void *overlay_list;
@@ -826,8 +853,12 @@ unregister_all_backing_wims(const tchar drive_letter)
 		WIM_PROVIDER_REMOVE_OVERLAY_INPUT wim;
 	} in;
 
-	wsprintf(volume, L"\\\\.\\%lc:", drive_letter);
+	path_len = GetFullPathName(L".", ARRAY_LEN(full_path), full_path, NULL);
+	ASSERT(path_len > 0,
+	       "Failed to get full path of current directory; error=%u",
+	       (unsigned)GetLastError());
 
+	wsprintf(volume, L"\\\\.\\%lc:", full_path[0]);
 	h = CreateFile(volume, GENERIC_READ | GENERIC_WRITE,
 		       FILE_SHARE_VALID_FLAGS, NULL, OPEN_EXISTING,
 		       FILE_FLAG_BACKUP_SEMANTICS, NULL);
@@ -859,11 +890,11 @@ unregister_all_backing_wims(const tchar drive_letter)
 		ASSERT(DeviceIoControl(h, FSCTL_REMOVE_OVERLAY, &in, sizeof(in),
 				       NULL, 0, &bytes_returned, NULL),
 		       "FSCTL_REMOVE_OVERLAY failed; error=%u",
-		       (unsigned )GetLastError());
+		       (unsigned)GetLastError());
 		if (entry->NextEntryOffset == 0)
 			break;
 		entry = (const WIM_PROVIDER_OVERLAY_ENTRY *)
-			((const uint8_t *)entry + entry->NextEntryOffset);
+			((const u8 *)entry + entry->NextEntryOffset);
 	}
 	free(overlay_list);
 	CloseHandle(h);
@@ -884,7 +915,7 @@ op__wimboot_test(void)
 
 	index = select_random_wimfile_index();
 
-	unregister_all_backing_wims(L'E');
+	unregister_all_backing_wims();
 	copy_file(get_wimfile(index), L"wimboot.wim");
 
 	CHECK_RET(wimlib_open_wim(L"wimboot.wim", 0, &wim));
@@ -931,7 +962,7 @@ op__wimboot_test(void)
 	wimlib_free(wim);
 	wimlib_free(wim2);
 }
-#endif /* __WIN32__ */
+#endif /* _WIN32 */
 
 static int
 is_solid_resource(const struct wimlib_resource_entry *resource, void *_ctx)
@@ -953,7 +984,7 @@ op__split_test(void)
 	WIMStruct *wim;
 	WIMStruct *swm;
 	WIMStruct *joined_wim;
-	uint64_t part_size;
+	u64 part_size;
 	int write_flags;
 	const tchar *globs[] = { T("tmp*.swm") };
 	int image_count;
@@ -1039,40 +1070,49 @@ static const operation_func operation_table[] = {
 	op__apply_and_capture_test,
 	op__split_test,
 	op__set_compression_level,
-#ifdef __WIN32__
+#ifdef _WIN32
 	op__wimboot_test,
 #endif
 };
 
-#ifdef __WIN32__
-extern int wmain(int argc, wchar_t **argv);
+#ifdef _WIN32
+int wmain(int argc, wchar_t **argv);
 #define main wmain
 #endif
 
 int
 main(int argc, tchar **argv)
 {
-	unsigned long long num_iterations;
+	unsigned long time_limit = 0;
+	time_t start_time;
+	u64 i;
 
-	if (argc < 2) {
-		num_iterations = ULLONG_MAX;
-		printf("Starting test runner\n");
-	} else {
-		num_iterations = tstrtoull(argv[1], NULL, 10);
-		printf("Starting test runner with %llu iterations\n",
-		       num_iterations);
-	}
+	/* If you want to make the tests deterministic, delete this line. */
+	random_state = ((u64)time(NULL) << 16) ^ getpid();
 
-	CHECK_RET(wimlib_global_init(0));
+	if (argc >= 2)
+		time_limit = tstrtoul(argv[1], NULL, 10);
+
+	if (time_limit == 0)
+		printf("Starting wlfuzz with no time limit\n");
+	else
+		printf("Starting wlfuzz with time limit of %lu seconds\n",
+		       time_limit);
+
+	CHECK_RET(wimlib_global_init(WIMLIB_INIT_FLAG_STRICT_APPLY_PRIVILEGES |
+				     WIMLIB_INIT_FLAG_STRICT_CAPTURE_PRIVILEGES));
 	wimlib_set_print_errors(true);
+	wimlib_seed_random(rand64());
 
 	change_to_temporary_directory();
 
-	for (int i = 0; i < MAX_NUM_WIMS; i++)
+	for (i = 0; i < MAX_NUM_WIMS; i++)
 		ASSERT(!tunlink(get_wimfile(i)) || errno == ENOENT, "unlink: %m");
 
-	for (unsigned long long i = 0; i < num_iterations; i++) {
-		printf("--> iteration %llu\n", i);
+	i = 0;
+	start_time = time(NULL);
+	while (time_limit == 0 || time(NULL) < start_time + time_limit) {
+		printf("--> iteration %"PRIu64"\n", ++i);
 		(*operation_table[rand32() % ARRAY_LEN(operation_table)])();
 	}
 

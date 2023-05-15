@@ -70,17 +70,17 @@ Sleep 2
     export LIBXML2_LIBS="/usr/local/Cellar/libxml2/2.10.3_1/include" 
     export OPENSSL_CFLAGS="-L/usr/local/Cellar/openssl@3/3.0.7/lib"
     export OPENSSL_LIBS="/usr/local/Cellar/openssl@3/3.0.7/include"
-    export PKG_CONFIG_PATH=/usr/local/Cellat/wimlib/1.13.6/lib
-    ./configure --prefix=/usr/local CC=$CC --without-ntfs-3g --without-fuse --prefix=/usr/local/Cellar/wimlib/1.13.6
+    export PKG_CONFIG_PATH=/usr/local/Cellat/wimlib/1.14.1/lib
+    ./configure --prefix=/usr/local CC=$CC --without-ntfs-3g --without-fuse --prefix=/usr/local/Cellar/wimlib/1.14.1
     make
     sudo make install
-    ln -s /usr/local/Cellar/wimlib/1.13.6 /usr/local/opt/wimlib
+    ln -s /usr/local/Cellar/wimlib/1.14.1 /usr/local/opt/wimlib
+    ln -s /usr/local/Cellar/wimlib/1.14.1/include/wimlib.h /usr/local/include
     ln -s /usr/local/Cellar/libxml2/2.10.3_1 /usr/local/opt/libxml2
     ln -s /usr/local/Cellar/openssl@3/3.0.7 /usr/local/opt/openssl@3
     ln -s /usr/local/Cellar/openssl@3/3.0.7 /usr/local/opt/openssl
-    sudo ln -s /usr/local/Cellar/wimlib/1.13.6/bin/* /usr/local/bin
-    sudo cp -Rp ./libwim.15.dylib /usr/local/Cellar/wimlib/1.13.6/lib
-    sudo cp -Rp /usr/local/Cellar/wimlib/1.13.6/share/man /usr/local/share/
+    sudo ln -s /usr/local/Cellar/wimlib/1.14.1/bin/* /usr/local/bin
+    sudo cp -Rp /usr/local/Cellar/wimlib/1.14.1/share/man /usr/local/share/
     echo $PKG_CONFIG_PATH
     Umount -f /Volumes/Library-wimlib
     echo "=============================================" 

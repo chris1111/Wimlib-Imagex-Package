@@ -34,7 +34,7 @@
 #include "wimlib/compiler.h"
 #include "wimlib/types.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 /*
  * The Windows Overlay Filesystem filter (WOF, a.k.a. wof.sys) is a filesystem
@@ -157,6 +157,7 @@ typedef struct _FILE_PROVIDER_EXTERNAL_INFO_V1 {
 #ifndef FSCTL_ENUM_OVERLAY
 #define FSCTL_ENUM_OVERLAY \
 	CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 199, METHOD_NEITHER, FILE_ANY_ACCESS)
+#endif
 typedef struct _WIM_PROVIDER_OVERLAY_ENTRY {
 	ULONG NextEntryOffset;
 	LARGE_INTEGER DataSourceId;
@@ -166,13 +167,13 @@ typedef struct _WIM_PROVIDER_OVERLAY_ENTRY {
 	ULONG WimIndex;
 	ULONG Flags;
 } WIM_PROVIDER_OVERLAY_ENTRY, *PWIM_PROVIDER_OVERLAY_ENTRY;
-#endif /* FSCTL_ENUM_OVERLAY */
 
 /* Add a new external backing source to a volume's namespace.
  * Ref: https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/fsctl-add-overlay */
 #ifndef FSCTL_ADD_OVERLAY
 #define FSCTL_ADD_OVERLAY \
 	CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 204, METHOD_BUFFERED, FILE_WRITE_DATA)
+#endif
 typedef struct _WIM_PROVIDER_ADD_OVERLAY_INPUT {
 #define WIM_BOOT_NOT_OS_WIM	0
 #define WIM_BOOT_OS_WIM		1
@@ -181,29 +182,28 @@ typedef struct _WIM_PROVIDER_ADD_OVERLAY_INPUT {
 	ULONG WimFileNameOffset;
 	ULONG WimFileNameLength;
 } WIM_PROVIDER_ADD_OVERLAY_INPUT, *PWIM_PROVIDER_ADD_OVERLAY_INPUT;
-#endif /* FSCTL_ADD_OVERLAY */
 
 /* Removes a backing source from a volume.
  * Ref: https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/fsctl-remove-overlay */
 #ifndef FSCTL_REMOVE_OVERLAY
 #define FSCTL_REMOVE_OVERLAY \
 	CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 205, METHOD_BUFFERED, FILE_WRITE_DATA)
+#endif
 typedef struct _WIM_PROVIDER_REMOVE_OVERLAY_INPUT {
 	LARGE_INTEGER DataSourceId;
 } WIM_PROVIDER_REMOVE_OVERLAY_INPUT, *PWIM_PROVIDER_REMOVE_OVERLAY_INPUT;
-#endif /* FSCTL_REMOVE_OVERLAY */
 
 /* Updates a new data source identifier for a backing source attached to a volume.
  * Ref: https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/fsctl-update-overlay */
 #ifndef FSCTL_UPDATE_OVERLAY
 #define FSCTL_UPDATE_OVERLAY \
 	CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 206, METHOD_BUFFERED, FILE_WRITE_DATA)
+#endif
 typedef struct _WIM_PROVIDER_UPDATE_OVERLAY_INPUT {
 	LARGE_INTEGER DataSourceId;
 	ULONG         WimFileNameOffset;
 	ULONG         WimFileNameLength;
 } WIM_PROVIDER_UPDATE_OVERLAY_INPUT, *PWIM_PROVIDER_UPDATE_OVERLAY_INPUT;
-#endif /* FSCTL_UPDATE_OVERLAY */
 
 /*----------------------------------------------------------------------------*
  *        WOF reparse point and WimOverlay.dat structs (undocumented)         *
@@ -248,7 +248,7 @@ struct wim_provider_rpdata {
 
 	/* Byte offset of the file's unnamed data stream in the WIM.  */
 	le64 unnamed_data_stream_offset_in_wim;
-} _packed_attribute;
+} __attribute__((packed));
 
 /* WIM-specific information about a WIM data source  */
 struct WimOverlay_dat_entry_1 {
@@ -277,7 +277,7 @@ struct WimOverlay_dat_entry_1 {
 
 	/* GUID of the WIM file (copied from the WIM header, offset +0x18).  */
 	u8 guid[16];
-} _packed_attribute;
+} __attribute__((packed));
 
 /*
  * Format of file: "\System Volume Information\WimOverlay.dat"
@@ -308,7 +308,7 @@ struct WimOverlay_dat_header {
 	le64 next_data_source_id;
 
 	struct WimOverlay_dat_entry_1 entry_1s[];
-} _packed_attribute;
+} __attribute__((packed));
 
 /* Location information about a WIM data source  */
 struct WimOverlay_dat_entry_2 {
@@ -414,10 +414,10 @@ struct WimOverlay_dat_entry_2 {
 		/* Null-terminated path to WIM file.  Begins with \ but does
 		 * *not* include drive letter!  */
 		utf16lechar wim_file_name[];
-	} _packed_attribute;
-} _packed_attribute;
+	} __attribute__((packed));
+} __attribute__((packed));
 
-static _unused_attribute void
+static void __attribute__((unused))
 wof_check_structs(void)
 {
 	STATIC_ASSERT(sizeof(struct WimOverlay_dat_header) == 24);
@@ -425,6 +425,6 @@ wof_check_structs(void)
 	STATIC_ASSERT(sizeof(struct WimOverlay_dat_entry_2) == 104);
 }
 
-#endif /* __WIN32__ */
+#endif /* _WIN32 */
 
 #endif /* _WOF_H_ */

@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2012-2016 Eric Biggers
+ * Copyright 2012-2023 Eric Biggers
  *
  * This file is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -25,19 +25,21 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "wimlib.h"
 #include "wimlib/assert.h"
 #include "wimlib/blob_table.h"
+#include "wimlib/cpu_features.h"
 #include "wimlib/dentry.h"
 #include "wimlib/encoding.h"
 #include "wimlib/file_io.h"
 #include "wimlib/integrity.h"
 #include "wimlib/metadata.h"
 #include "wimlib/security.h"
+#include "wimlib/threads.h"
 #include "wimlib/wim.h"
 #include "wimlib/xml.h"
 #include "wimlib/win32.h"
@@ -643,10 +645,16 @@ begin_read(WIMStruct *wim, const void *wim_filename_or_fd, int open_flags)
 		filedes_init(&wim->in_fd, *(const int*)wim_filename_or_fd);
 		wim->in_fd.is_pipe = 1;
 	} else {
+		struct stat stbuf;
+
 		wimfile = wim_filename_or_fd;
 		ret = open_wim_file(wimfile, &wim->in_fd);
 		if (ret)
 			return ret;
+
+		/* The file size is needed for enforcing some limits later. */
+		if (fstat(wim->in_fd.fd, &stbuf) == 0)
+			wim->file_size = stbuf.st_size;
 
 		/* The absolute path to the WIM is requested so that
 		 * wimlib_overwrite() still works even if the process changes
@@ -942,7 +950,7 @@ wimlib_get_version_string(void)
 }
 
 static bool lib_initialized = false;
-static pthread_mutex_t lib_initialization_mutex = PTHREAD_MUTEX_INITIALIZER;
+static struct mutex lib_initialization_mutex = MUTEX_INITIALIZER;
 
 /* API function documented in wimlib.h  */
 WIMLIBAPI int
@@ -953,7 +961,7 @@ wimlib_global_init(int init_flags)
 	if (lib_initialized)
 		goto out;
 
-	pthread_mutex_lock(&lib_initialization_mutex);
+	mutex_lock(&lib_initialization_mutex);
 
 	if (lib_initialized)
 		goto out_unlock;
@@ -977,8 +985,8 @@ wimlib_global_init(int init_flags)
 			    WIMLIB_INIT_FLAG_DEFAULT_CASE_INSENSITIVE))
 		goto out_unlock;
 
-	xml_global_init();
-#ifdef __WIN32__
+	init_cpu_features();
+#ifdef _WIN32
 	ret = win32_global_init(init_flags);
 	if (ret)
 		goto out_unlock;
@@ -991,7 +999,7 @@ wimlib_global_init(int init_flags)
 	lib_initialized = true;
 	ret = 0;
 out_unlock:
-	pthread_mutex_unlock(&lib_initialization_mutex);
+	mutex_unlock(&lib_initialization_mutex);
 out:
 	return ret;
 }
@@ -1003,13 +1011,12 @@ wimlib_global_cleanup(void)
 	if (!lib_initialized)
 		return;
 
-	pthread_mutex_lock(&lib_initialization_mutex);
+	mutex_lock(&lib_initialization_mutex);
 
 	if (!lib_initialized)
 		goto out_unlock;
 
-	xml_global_cleanup();
-#ifdef __WIN32__
+#ifdef _WIN32
 	win32_global_cleanup();
 #endif
 
@@ -1017,5 +1024,5 @@ wimlib_global_cleanup(void)
 	lib_initialized = false;
 
 out_unlock:
-	pthread_mutex_unlock(&lib_initialization_mutex);
+	mutex_unlock(&lib_initialization_mutex);
 }

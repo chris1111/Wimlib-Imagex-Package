@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2013-2021 Eric Biggers
+ * Copyright 2013-2023 Eric Biggers
  *
  * This file is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,10 +16,10 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -1244,7 +1244,7 @@ remove_conflicting_short_name(const struct wim_dentry *dentry, struct win32_appl
 	HANDLE h;
 	size_t bufsize = offsetof(FILE_NAME_INFORMATION, FileName) +
 			 (13 * sizeof(wchar_t));
-	u8 buf[bufsize] _aligned_attribute(8);
+	u8 buf[bufsize] __attribute__((aligned(8)));
 	bool retried = false;
 	FILE_NAME_INFORMATION *info = (FILE_NAME_INFORMATION *)buf;
 
@@ -1326,7 +1326,7 @@ set_short_name(HANDLE h, const struct wim_dentry *dentry,
 	size_t bufsize = offsetof(FILE_NAME_INFORMATION, FileName) +
 			 max(dentry->d_short_name_nbytes, sizeof(wchar_t)) +
 			 sizeof(wchar_t);
-	u8 buf[bufsize] _aligned_attribute(8);
+	u8 buf[bufsize] __attribute__((aligned(8)));
 	FILE_NAME_INFORMATION *info = (FILE_NAME_INFORMATION *)buf;
 	NTSTATUS status;
 	bool tried_to_remove_existing = false;
@@ -1480,7 +1480,7 @@ retry:
 	if (unlikely(!NT_SUCCESS(status))) {
 		winnt_error(status, L"Can't open \"%ls\" for deletion "
 			    "(perms=%x, flags=%x)",
-			    current_path(ctx), perms, flags);
+			    current_path(ctx), (u32)perms, (u32)flags);
 		return WIMLIB_ERR_OPEN;
 	}
 
@@ -1634,7 +1634,7 @@ create_empty_streams(const struct wim_dentry *dentry,
 		if (strm->stream_type == STREAM_TYPE_REPARSE_POINT &&
 		    ctx->common.supported_features.reparse_points)
 		{
-			u8 buf[REPARSE_DATA_OFFSET] _aligned_attribute(8);
+			u8 buf[REPARSE_DATA_OFFSET] __attribute__((aligned(8)));
 			struct reparse_buffer_disk *rpbuf =
 				(struct reparse_buffer_disk *)buf;
 			complete_reparse_point(rpbuf, inode, 0);
@@ -1843,7 +1843,7 @@ create_link(HANDLE h, const struct wim_dentry *dentry,
 
 		size_t bufsize = offsetof(FILE_LINK_INFORMATION, FileName) +
 				 ctx->pathbuf.Length + sizeof(wchar_t);
-		u8 buf[bufsize] _aligned_attribute(8);
+		u8 buf[bufsize] __attribute__((aligned(8)));
 		FILE_LINK_INFORMATION *info = (FILE_LINK_INFORMATION *)buf;
 		NTSTATUS status;
 
@@ -1852,16 +1852,25 @@ create_link(HANDLE h, const struct wim_dentry *dentry,
 		info->FileNameLength = ctx->pathbuf.Length;
 		memcpy(info->FileName, ctx->pathbuf.Buffer, ctx->pathbuf.Length);
 		info->FileName[info->FileNameLength / 2] = L'\0';
+		/*
+		 * Note: the null terminator isn't actually necessary, but if
+		 * you don't add the extra character, you get
+		 * STATUS_INFO_LENGTH_MISMATCH when FileNameLength is 2.
+		 */
 
-		/* Note: the null terminator isn't actually necessary,
-		 * but if you don't add the extra character, you get
-		 * STATUS_INFO_LENGTH_MISMATCH when FileNameLength
-		 * happens to be 2  */
-
-		status = NtSetInformationFile(h, &ctx->iosb, info, bufsize,
-					      FileLinkInformation);
-		if (NT_SUCCESS(status))
-			return 0;
+		/*
+		 * When fuzzing with wlfuzz.exe, creating a hard link sometimes
+		 * fails with STATUS_ACCESS_DENIED.  However, it eventually
+		 * succeeds when re-attempted...
+		 */
+		int i = 0;
+		do {
+			status = NtSetInformationFile(h, &ctx->iosb, info,
+						      bufsize,
+						      FileLinkInformation);
+			if (NT_SUCCESS(status))
+				return 0;
+		} while (++i < 32);
 		winnt_error(status, L"Failed to create link \"%ls\"",
 			    current_path(ctx));
 		return WIMLIB_ERR_LINK;
@@ -2832,7 +2841,7 @@ set_xattrs(HANDLE h, const struct wim_inode *inode, struct win32_apply_ctx *ctx)
 	u32 len;
 	const struct wim_xattr_entry *entry;
 	size_t bufsize = 0;
-	u8 _buf[1024] _aligned_attribute(4);
+	u8 _buf[1024] __attribute__((aligned(4)));
 	u8 *buf = _buf;
 	FILE_FULL_EA_INFORMATION *ea, *ea_prev;
 	NTSTATUS status;
@@ -3350,4 +3359,4 @@ const struct apply_operations win32_apply_ops = {
 	.context_size           = sizeof(struct win32_apply_ctx),
 };
 
-#endif /* __WIN32__ */
+#endif /* _WIN32 */

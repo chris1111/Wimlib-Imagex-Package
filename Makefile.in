@@ -118,18 +118,17 @@ host_triplet = @host@
 @ENABLE_TEST_SUPPORT_TRUE@am__append_4 = src/test_support.c		\
 @ENABLE_TEST_SUPPORT_TRUE@		     include/wimlib/test_support.h
 
-@ENABLE_SSSE3_SHA1_TRUE@am__append_5 = src/sha1-ssse3.asm
-@ENABLE_SSSE3_SHA1_TRUE@am__append_6 = src/sha1-ssse3.lo
+@ENABLE_TEST_SUPPORT_TRUE@@WINDOWS_NATIVE_BUILD_FALSE@am__append_5 = -lm
 bin_PROGRAMS = wimlib-imagex$(EXEEXT)
-@WINDOWS_NATIVE_BUILD_TRUE@am__append_7 = \
+@WINDOWS_NATIVE_BUILD_TRUE@am__append_6 = \
 @WINDOWS_NATIVE_BUILD_TRUE@	programs/imagex-win32.c	\
 @WINDOWS_NATIVE_BUILD_TRUE@	programs/imagex-win32.h	\
 @WINDOWS_NATIVE_BUILD_TRUE@	programs/wgetopt.c	\
 @WINDOWS_NATIVE_BUILD_TRUE@	programs/wgetopt.h
 
 check_PROGRAMS = tests/tree-cmp$(EXEEXT)
-@WITH_FUSE_TRUE@am__append_8 = tests/test-imagex-mount
-@WITH_NTFS_3G_TRUE@am__append_9 = tests/test-imagex-ntfs
+@WITH_FUSE_TRUE@am__append_7 = tests/test-imagex-mount
+@WITH_NTFS_3G_TRUE@am__append_8 = tests/test-imagex-ntfs
 @WINDOWS_NATIVE_BUILD_FALSE@TESTS = $(dist_check_SCRIPTS)
 EXTRA_PROGRAMS = tests/wlfuzz$(EXEEXT)
 subdir = .
@@ -137,8 +136,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/m4/nasm.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
@@ -184,36 +182,38 @@ am__uninstall_files_from_dir = { \
   }
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
+@WINDOWS_NATIVE_BUILD_FALSE@am__DEPENDENCIES_2 =  \
+@WINDOWS_NATIVE_BUILD_FALSE@	$(am__DEPENDENCIES_1)
+@WINDOWS_NATIVE_BUILD_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 libwim_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__append_6)
+	$(am__DEPENDENCIES_2)
 am__libwim_la_SOURCES_DIST = src/add_image.c src/avl_tree.c \
 	src/blob_table.c src/compress.c src/compress_common.c \
-	src/compress_parallel.c src/compress_serial.c src/decompress.c \
-	src/decompress_common.c src/delete_image.c src/dentry.c \
-	src/divsufsort.c src/encoding.c src/error.c src/export_image.c \
-	src/extract.c src/file_io.c src/header.c src/inode.c \
-	src/inode_fixup.c src/inode_table.c src/integrity.c \
-	src/iterate_dir.c src/join.c src/lcpit_matchfinder.c \
-	src/lzms_common.c src/lzms_compress.c src/lzms_decompress.c \
-	src/lzx_common.c src/lzx_compress.c src/lzx_decompress.c \
-	src/metadata_resource.c src/mount_image.c src/pathlist.c \
-	src/paths.c src/pattern.c src/progress.c src/reference.c \
-	src/registry.c src/reparse.c src/resource.c src/scan.c \
-	src/security.c src/sha1.c src/solid.c src/split.c \
-	src/tagged_items.c src/template.c src/textfile.c \
+	src/compress_parallel.c src/compress_serial.c \
+	src/cpu_features.c src/decompress.c src/decompress_common.c \
+	src/delete_image.c src/dentry.c src/divsufsort.c \
+	src/encoding.c src/error.c src/export_image.c src/extract.c \
+	src/file_io.c src/header.c src/inode.c src/inode_fixup.c \
+	src/inode_table.c src/integrity.c src/iterate_dir.c src/join.c \
+	src/lcpit_matchfinder.c src/lzms_common.c src/lzms_compress.c \
+	src/lzms_decompress.c src/lzx_common.c src/lzx_compress.c \
+	src/lzx_decompress.c src/metadata_resource.c src/mount_image.c \
+	src/pathlist.c src/paths.c src/pattern.c src/progress.c \
+	src/reference.c src/registry.c src/reparse.c src/resource.c \
+	src/scan.c src/security.c src/sha1.c src/solid.c src/split.c \
+	src/tagged_items.c src/template.c src/textfile.c src/threads.c \
 	src/timestamp.c src/update_image.c src/util.c src/verify.c \
-	src/wim.c src/write.c src/x86_cpu_features.c src/xml.c \
-	src/xml_windows.c src/xpress_compress.c \
-	src/xpress_decompress.c include/wimlib/alloca.h \
-	include/wimlib/apply.h include/wimlib/assert.h \
-	include/wimlib/avl_tree.h include/wimlib/bitops.h \
-	include/wimlib/blob_table.h include/wimlib/bt_matchfinder.h \
-	include/wimlib/case.h include/wimlib/compiler.h \
-	include/wimlib/compressor_ops.h \
+	src/wim.c src/write.c src/xml.c src/xml_windows.c \
+	src/xmlproc.c src/xpress_compress.c src/xpress_decompress.c \
+	include/wimlib/alloca.h include/wimlib/apply.h \
+	include/wimlib/assert.h include/wimlib/avl_tree.h \
+	include/wimlib/bitops.h include/wimlib/blob_table.h \
+	include/wimlib/bt_matchfinder.h include/wimlib/case.h \
+	include/wimlib/compiler.h include/wimlib/compressor_ops.h \
 	include/wimlib/compress_common.h \
 	include/wimlib/chunk_compressor.h \
+	include/wimlib/cpu_features.h \
 	include/wimlib/decompressor_ops.h \
 	include/wimlib/decompress_common.h include/wimlib/dentry.h \
 	include/wimlib/divsufsort.h include/wimlib/encoding.h \
@@ -233,21 +233,21 @@ am__libwim_la_SOURCES_DIST = src/add_image.c src/avl_tree.c \
 	include/wimlib/scan.h include/wimlib/security.h \
 	include/wimlib/security_descriptor.h include/wimlib/sha1.h \
 	include/wimlib/solid.h include/wimlib/tagged_items.h \
-	include/wimlib/textfile.h include/wimlib/timestamp.h \
-	include/wimlib/types.h include/wimlib/unaligned.h \
-	include/wimlib/unix_data.h include/wimlib/util.h \
-	include/wimlib/wim.h include/wimlib/write.h \
-	include/wimlib/x86_cpu_features.h include/wimlib/xattr.h \
+	include/wimlib/textfile.h include/wimlib/threads.h \
+	include/wimlib/timestamp.h include/wimlib/types.h \
+	include/wimlib/unaligned.h include/wimlib/unix_data.h \
+	include/wimlib/util.h include/wimlib/wim.h \
+	include/wimlib/write.h include/wimlib/xattr.h \
 	include/wimlib/xml.h include/wimlib/xml_windows.h \
-	include/wimlib/xpress_constants.h src/ntfs-3g_apply.c \
-	src/ntfs-3g_capture.c include/wimlib/ntfs_3g.h src/wimboot.c \
-	src/win32_common.c src/win32_apply.c src/win32_capture.c \
-	src/win32_replacements.c src/win32_vss.c \
-	include/wimlib/wimboot.h include/wimlib/win32.h \
-	include/wimlib/win32_common.h include/wimlib/win32_vss.h \
-	include/wimlib/wof.h src/unix_apply.c src/unix_capture.c \
-	src/test_support.c include/wimlib/test_support.h \
-	src/sha1-ssse3.asm
+	include/wimlib/xmlproc.h include/wimlib/xpress_constants.h \
+	src/ntfs-3g_apply.c src/ntfs-3g_capture.c \
+	include/wimlib/ntfs_3g.h src/wimboot.c src/win32_common.c \
+	src/win32_apply.c src/win32_capture.c src/win32_replacements.c \
+	src/win32_vss.c include/wimlib/wimboot.h \
+	include/wimlib/win32.h include/wimlib/win32_common.h \
+	include/wimlib/win32_vss.h include/wimlib/wof.h \
+	src/unix_apply.c src/unix_capture.c src/test_support.c \
+	include/wimlib/test_support.h
 am__dirstamp = $(am__leading_dot)dirstamp
 @WITH_NTFS_3G_TRUE@am__objects_1 = src/libwim_la-ntfs-3g_apply.lo \
 @WITH_NTFS_3G_TRUE@	src/libwim_la-ntfs-3g_capture.lo
@@ -262,13 +262,12 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @WINDOWS_NATIVE_BUILD_FALSE@	src/libwim_la-unix_capture.lo
 @ENABLE_TEST_SUPPORT_TRUE@am__objects_4 =  \
 @ENABLE_TEST_SUPPORT_TRUE@	src/libwim_la-test_support.lo
-am__objects_5 =
 am_libwim_la_OBJECTS = src/libwim_la-add_image.lo \
 	src/libwim_la-avl_tree.lo src/libwim_la-blob_table.lo \
 	src/libwim_la-compress.lo src/libwim_la-compress_common.lo \
 	src/libwim_la-compress_parallel.lo \
-	src/libwim_la-compress_serial.lo src/libwim_la-decompress.lo \
-	src/libwim_la-decompress_common.lo \
+	src/libwim_la-compress_serial.lo src/libwim_la-cpu_features.lo \
+	src/libwim_la-decompress.lo src/libwim_la-decompress_common.lo \
 	src/libwim_la-delete_image.lo src/libwim_la-dentry.lo \
 	src/libwim_la-divsufsort.lo src/libwim_la-encoding.lo \
 	src/libwim_la-error.lo src/libwim_la-export_image.lo \
@@ -289,15 +288,14 @@ am_libwim_la_OBJECTS = src/libwim_la-add_image.lo \
 	src/libwim_la-security.lo src/libwim_la-sha1.lo \
 	src/libwim_la-solid.lo src/libwim_la-split.lo \
 	src/libwim_la-tagged_items.lo src/libwim_la-template.lo \
-	src/libwim_la-textfile.lo src/libwim_la-timestamp.lo \
-	src/libwim_la-update_image.lo src/libwim_la-util.lo \
-	src/libwim_la-verify.lo src/libwim_la-wim.lo \
-	src/libwim_la-write.lo src/libwim_la-x86_cpu_features.lo \
+	src/libwim_la-textfile.lo src/libwim_la-threads.lo \
+	src/libwim_la-timestamp.lo src/libwim_la-update_image.lo \
+	src/libwim_la-util.lo src/libwim_la-verify.lo \
+	src/libwim_la-wim.lo src/libwim_la-write.lo \
 	src/libwim_la-xml.lo src/libwim_la-xml_windows.lo \
-	src/libwim_la-xpress_compress.lo \
+	src/libwim_la-xmlproc.lo src/libwim_la-xpress_compress.lo \
 	src/libwim_la-xpress_decompress.lo $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
-	$(am__objects_5)
+	$(am__objects_2) $(am__objects_3) $(am__objects_4)
 libwim_la_OBJECTS = $(am_libwim_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -315,10 +313,10 @@ tests_wlfuzz_DEPENDENCIES = $(top_builddir)/libwim.la
 am__wimlib_imagex_SOURCES_DIST = programs/imagex.c include/wimlib.h \
 	include/wimlib_tchar.h programs/imagex-win32.c \
 	programs/imagex-win32.h programs/wgetopt.c programs/wgetopt.h
-@WINDOWS_NATIVE_BUILD_TRUE@am__objects_6 = programs/wimlib_imagex-imagex-win32.$(OBJEXT) \
+@WINDOWS_NATIVE_BUILD_TRUE@am__objects_5 = programs/wimlib_imagex-imagex-win32.$(OBJEXT) \
 @WINDOWS_NATIVE_BUILD_TRUE@	programs/wimlib_imagex-wgetopt.$(OBJEXT)
 am_wimlib_imagex_OBJECTS = programs/wimlib_imagex-imagex.$(OBJEXT) \
-	$(am__objects_6)
+	$(am__objects_5)
 wimlib_imagex_OBJECTS = $(am_wimlib_imagex_OBJECTS)
 wimlib_imagex_DEPENDENCIES = $(top_builddir)/libwim.la
 wimlib_imagex_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -355,6 +353,7 @@ am__depfiles_remade =  \
 	src/$(DEPDIR)/libwim_la-compress_common.Plo \
 	src/$(DEPDIR)/libwim_la-compress_parallel.Plo \
 	src/$(DEPDIR)/libwim_la-compress_serial.Plo \
+	src/$(DEPDIR)/libwim_la-cpu_features.Plo \
 	src/$(DEPDIR)/libwim_la-decompress.Plo \
 	src/$(DEPDIR)/libwim_la-decompress_common.Plo \
 	src/$(DEPDIR)/libwim_la-delete_image.Plo \
@@ -400,6 +399,7 @@ am__depfiles_remade =  \
 	src/$(DEPDIR)/libwim_la-template.Plo \
 	src/$(DEPDIR)/libwim_la-test_support.Plo \
 	src/$(DEPDIR)/libwim_la-textfile.Plo \
+	src/$(DEPDIR)/libwim_la-threads.Plo \
 	src/$(DEPDIR)/libwim_la-timestamp.Plo \
 	src/$(DEPDIR)/libwim_la-unix_apply.Plo \
 	src/$(DEPDIR)/libwim_la-unix_capture.Plo \
@@ -414,9 +414,9 @@ am__depfiles_remade =  \
 	src/$(DEPDIR)/libwim_la-win32_replacements.Plo \
 	src/$(DEPDIR)/libwim_la-win32_vss.Plo \
 	src/$(DEPDIR)/libwim_la-write.Plo \
-	src/$(DEPDIR)/libwim_la-x86_cpu_features.Plo \
 	src/$(DEPDIR)/libwim_la-xml.Plo \
 	src/$(DEPDIR)/libwim_la-xml_windows.Plo \
+	src/$(DEPDIR)/libwim_la-xmlproc.Plo \
 	src/$(DEPDIR)/libwim_la-xpress_compress.Plo \
 	src/$(DEPDIR)/libwim_la-xpress_decompress.Plo \
 	tests/$(DEPDIR)/tree-cmp.Po tests/$(DEPDIR)/wlfuzz.Po
@@ -660,11 +660,10 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/build-aux/missing \
 	$(top_srcdir)/build-aux/test-driver \
 	$(top_srcdir)/doc/Doxyfile.in \
-	$(top_srcdir)/programs/mkwinpeimg.in COPYING INSTALL NEWS \
-	README build-aux/ar-lib build-aux/compile \
-	build-aux/config.guess build-aux/config.rpath \
-	build-aux/config.sub build-aux/depcomp build-aux/install-sh \
-	build-aux/ltmain.sh build-aux/missing
+	$(top_srcdir)/programs/mkwinpeimg.in COPYING NEWS.md README.md \
+	build-aux/ar-lib build-aux/compile build-aux/config.guess \
+	build-aux/config.rpath build-aux/config.sub build-aux/depcomp \
+	build-aux/install-sh build-aux/ltmain.sh build-aux/missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -695,6 +694,7 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CSCOPE = @CSCOPE@
 CTAGS = @CTAGS@
@@ -720,8 +720,6 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
-LIBCRYPTO_CFLAGS = @LIBCRYPTO_CFLAGS@
-LIBCRYPTO_LIBS = @LIBCRYPTO_LIBS@
 LIBFUSE_CFLAGS = @LIBFUSE_CFLAGS@
 LIBFUSE_LIBS = @LIBFUSE_LIBS@
 LIBNTFS_3G_CFLAGS = @LIBNTFS_3G_CFLAGS@
@@ -730,8 +728,6 @@ LIBOBJS = @LIBOBJS@
 LIBRT_LIBS = @LIBRT_LIBS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
-LIBXML2_CFLAGS = @LIBXML2_CFLAGS@
-LIBXML2_LIBS = @LIBXML2_LIBS@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
@@ -739,10 +735,6 @@ LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
-NAFLAGS = @NAFLAGS@
-NASM = @NASM@
-NASM_PLATFORM_FLAGS = @NASM_PLATFORM_FLAGS@
-NASM_SYMBOL_PREFIX = @NASM_SYMBOL_PREFIX@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
@@ -767,6 +759,7 @@ PLATFORM_CPPFLAGS = @PLATFORM_CPPFLAGS@
 PLATFORM_LDFLAGS = @PLATFORM_LDFLAGS@
 PTHREAD_CC = @PTHREAD_CC@
 PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
+PTHREAD_CXX = @PTHREAD_CXX@
 PTHREAD_LIBS = @PTHREAD_LIBS@
 RANLIB = @RANLIB@
 SED = @SED@
@@ -842,9 +835,10 @@ AM_CFLAGS = -std=gnu99 $(PLATFORM_CFLAGS) -fno-common	\
 		  -Wundef -Wno-pointer-sign
 
 AM_LDFLAGS = $(PLATFORM_LDFLAGS)
-EXTRA_DIST = README README.WINDOWS COPYING COPYING.GPLv3 \
-	COPYING.LGPLv3 examples build-aux/nasm_lt.sh $(man1_MANS) \
-	tests/common_tests.sh tests/exclusionlists tests/test_utils.sh \
+EXTRA_DIST = README.md README.WINDOWS.md NEWS.md COPYING COPYING.GPLv3 \
+	COPYING.LGPLv3 examples tools/get-version-number.sh \
+	tools/windows-build.sh $(man1_MANS) tests/common_tests.sh \
+	tests/exclusionlists tests/test_utils.sh \
 	tests/security_descriptor_1.base64 \
 	tests/security_descriptor_1.bin \
 	tests/security_descriptor_2.base64 \
@@ -858,29 +852,30 @@ include_HEADERS = include/wimlib.h
 pkgconfig_DATA = wimlib.pc
 libwim_la_SOURCES = src/add_image.c src/avl_tree.c src/blob_table.c \
 	src/compress.c src/compress_common.c src/compress_parallel.c \
-	src/compress_serial.c src/decompress.c src/decompress_common.c \
-	src/delete_image.c src/dentry.c src/divsufsort.c \
-	src/encoding.c src/error.c src/export_image.c src/extract.c \
-	src/file_io.c src/header.c src/inode.c src/inode_fixup.c \
-	src/inode_table.c src/integrity.c src/iterate_dir.c src/join.c \
-	src/lcpit_matchfinder.c src/lzms_common.c src/lzms_compress.c \
-	src/lzms_decompress.c src/lzx_common.c src/lzx_compress.c \
-	src/lzx_decompress.c src/metadata_resource.c src/mount_image.c \
-	src/pathlist.c src/paths.c src/pattern.c src/progress.c \
-	src/reference.c src/registry.c src/reparse.c src/resource.c \
-	src/scan.c src/security.c src/sha1.c src/solid.c src/split.c \
-	src/tagged_items.c src/template.c src/textfile.c \
+	src/compress_serial.c src/cpu_features.c src/decompress.c \
+	src/decompress_common.c src/delete_image.c src/dentry.c \
+	src/divsufsort.c src/encoding.c src/error.c src/export_image.c \
+	src/extract.c src/file_io.c src/header.c src/inode.c \
+	src/inode_fixup.c src/inode_table.c src/integrity.c \
+	src/iterate_dir.c src/join.c src/lcpit_matchfinder.c \
+	src/lzms_common.c src/lzms_compress.c src/lzms_decompress.c \
+	src/lzx_common.c src/lzx_compress.c src/lzx_decompress.c \
+	src/metadata_resource.c src/mount_image.c src/pathlist.c \
+	src/paths.c src/pattern.c src/progress.c src/reference.c \
+	src/registry.c src/reparse.c src/resource.c src/scan.c \
+	src/security.c src/sha1.c src/solid.c src/split.c \
+	src/tagged_items.c src/template.c src/textfile.c src/threads.c \
 	src/timestamp.c src/update_image.c src/util.c src/verify.c \
-	src/wim.c src/write.c src/x86_cpu_features.c src/xml.c \
-	src/xml_windows.c src/xpress_compress.c \
-	src/xpress_decompress.c include/wimlib/alloca.h \
-	include/wimlib/apply.h include/wimlib/assert.h \
-	include/wimlib/avl_tree.h include/wimlib/bitops.h \
-	include/wimlib/blob_table.h include/wimlib/bt_matchfinder.h \
-	include/wimlib/case.h include/wimlib/compiler.h \
-	include/wimlib/compressor_ops.h \
+	src/wim.c src/write.c src/xml.c src/xml_windows.c \
+	src/xmlproc.c src/xpress_compress.c src/xpress_decompress.c \
+	include/wimlib/alloca.h include/wimlib/apply.h \
+	include/wimlib/assert.h include/wimlib/avl_tree.h \
+	include/wimlib/bitops.h include/wimlib/blob_table.h \
+	include/wimlib/bt_matchfinder.h include/wimlib/case.h \
+	include/wimlib/compiler.h include/wimlib/compressor_ops.h \
 	include/wimlib/compress_common.h \
 	include/wimlib/chunk_compressor.h \
+	include/wimlib/cpu_features.h \
 	include/wimlib/decompressor_ops.h \
 	include/wimlib/decompress_common.h include/wimlib/dentry.h \
 	include/wimlib/divsufsort.h include/wimlib/encoding.h \
@@ -900,32 +895,35 @@ libwim_la_SOURCES = src/add_image.c src/avl_tree.c src/blob_table.c \
 	include/wimlib/scan.h include/wimlib/security.h \
 	include/wimlib/security_descriptor.h include/wimlib/sha1.h \
 	include/wimlib/solid.h include/wimlib/tagged_items.h \
-	include/wimlib/textfile.h include/wimlib/timestamp.h \
-	include/wimlib/types.h include/wimlib/unaligned.h \
-	include/wimlib/unix_data.h include/wimlib/util.h \
-	include/wimlib/wim.h include/wimlib/write.h \
-	include/wimlib/x86_cpu_features.h include/wimlib/xattr.h \
+	include/wimlib/textfile.h include/wimlib/threads.h \
+	include/wimlib/timestamp.h include/wimlib/types.h \
+	include/wimlib/unaligned.h include/wimlib/unix_data.h \
+	include/wimlib/util.h include/wimlib/wim.h \
+	include/wimlib/write.h include/wimlib/xattr.h \
 	include/wimlib/xml.h include/wimlib/xml_windows.h \
-	include/wimlib/xpress_constants.h $(am__append_1) \
-	$(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5)
-@WINDOWS_NATIVE_BUILD_FALSE@PLATFORM_LIBS = 
-@WINDOWS_NATIVE_BUILD_TRUE@PLATFORM_LIBS = -lntdll
+	include/wimlib/xmlproc.h include/wimlib/xpress_constants.h \
+	$(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4)
+@WINDOWS_NATIVE_BUILD_FALSE@PLATFORM_LIBS = $(am__append_5)
+@WINDOWS_NATIVE_BUILD_TRUE@PLATFORM_LIBS = -lntdll $(am__append_5)
 libwim_la_CFLAGS = \
+	-DBUILDING_WIMLIB	\
 	$(AM_CFLAGS)		\
 	$(PTHREAD_CFLAGS)	\
-	$(LIBXML2_CFLAGS)	\
 	$(LIBNTFS_3G_CFLAGS)	\
-	$(LIBFUSE_CFLAGS)	\
-	$(LIBCRYPTO_CFLAGS)
+	$(LIBFUSE_CFLAGS)
 
-libwim_la_LDFLAGS = $(AM_LDFLAGS) -version-info 36:0:21
-libwim_la_LIBADD = $(PTHREAD_LIBS) $(LIBXML2_LIBS) $(LIBNTFS_3G_LIBS) \
-	$(LIBFUSE_LIBS) $(LIBRT_LIBS) $(LIBCRYPTO_LIBS) \
-	$(PLATFORM_LIBS) $(am__append_6)
+libwim_la_LDFLAGS = $(AM_LDFLAGS) -version-info 38:0:23
+libwim_la_LIBADD = \
+	$(PTHREAD_LIBS)		\
+	$(LIBNTFS_3G_LIBS)	\
+	$(LIBFUSE_LIBS)		\
+	$(LIBRT_LIBS)		\
+	$(PLATFORM_LIBS)
+
 dist_bin_SCRIPTS = programs/mkwinpeimg
 wimlib_imagex_SOURCES = programs/imagex.c include/wimlib.h \
-	include/wimlib_tchar.h $(am__append_7)
+	include/wimlib_tchar.h $(am__append_6)
 wimlib_imagex_CFLAGS = $(AM_CFLAGS) -Wno-deprecated-declarations
 wimlib_imagex_LDADD = $(top_builddir)/libwim.la
 wimlib_imagex_cmds = \
@@ -973,8 +971,8 @@ man1_MANS = \
 tests_tree_cmp_SOURCES = tests/tree-cmp.c
 dist_check_SCRIPTS = tests/test-imagex \
 	tests/test-imagex-capture_and_apply \
-	tests/test-imagex-update_and_extract $(am__append_8) \
-	$(am__append_9)
+	tests/test-imagex-update_and_extract $(am__append_7) \
+	$(am__append_8)
 tests_wlfuzz_SOURCES = tests/wlfuzz.c
 tests_wlfuzz_LDADD = $(top_builddir)/libwim.la
 all: config.h
@@ -1149,6 +1147,8 @@ src/libwim_la-compress_parallel.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-compress_serial.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/libwim_la-cpu_features.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-decompress.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-decompress_common.lo: src/$(am__dirstamp) \
@@ -1233,6 +1233,8 @@ src/libwim_la-template.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-textfile.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/libwim_la-threads.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-timestamp.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-update_image.lo: src/$(am__dirstamp) \
@@ -1245,11 +1247,11 @@ src/libwim_la-wim.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-write.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libwim_la-x86_cpu_features.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-xml.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-xml_windows.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
+src/libwim_la-xmlproc.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libwim_la-xpress_compress.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -1370,6 +1372,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-compress_common.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-compress_parallel.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-compress_serial.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-cpu_features.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-decompress.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-decompress_common.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-delete_image.Plo@am__quote@ # am--include-marker
@@ -1415,6 +1418,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-template.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-test_support.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-textfile.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-threads.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-timestamp.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-unix_apply.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-unix_capture.Plo@am__quote@ # am--include-marker
@@ -1429,9 +1433,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-win32_replacements.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-win32_vss.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-write.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-x86_cpu_features.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-xml.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-xml_windows.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-xmlproc.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-xpress_compress.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libwim_la-xpress_decompress.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tree-cmp.Po@am__quote@ # am--include-marker
@@ -1515,6 +1519,13 @@ src/libwim_la-compress_serial.lo: src/compress_serial.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/compress_serial.c' object='src/libwim_la-compress_serial.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -c -o src/libwim_la-compress_serial.lo `test -f 'src/compress_serial.c' || echo '$(srcdir)/'`src/compress_serial.c
+
+src/libwim_la-cpu_features.lo: src/cpu_features.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -MT src/libwim_la-cpu_features.lo -MD -MP -MF src/$(DEPDIR)/libwim_la-cpu_features.Tpo -c -o src/libwim_la-cpu_features.lo `test -f 'src/cpu_features.c' || echo '$(srcdir)/'`src/cpu_features.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libwim_la-cpu_features.Tpo src/$(DEPDIR)/libwim_la-cpu_features.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/cpu_features.c' object='src/libwim_la-cpu_features.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -c -o src/libwim_la-cpu_features.lo `test -f 'src/cpu_features.c' || echo '$(srcdir)/'`src/cpu_features.c
 
 src/libwim_la-decompress.lo: src/decompress.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -MT src/libwim_la-decompress.lo -MD -MP -MF src/$(DEPDIR)/libwim_la-decompress.Tpo -c -o src/libwim_la-decompress.lo `test -f 'src/decompress.c' || echo '$(srcdir)/'`src/decompress.c
@@ -1810,6 +1821,13 @@ src/libwim_la-textfile.lo: src/textfile.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -c -o src/libwim_la-textfile.lo `test -f 'src/textfile.c' || echo '$(srcdir)/'`src/textfile.c
 
+src/libwim_la-threads.lo: src/threads.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -MT src/libwim_la-threads.lo -MD -MP -MF src/$(DEPDIR)/libwim_la-threads.Tpo -c -o src/libwim_la-threads.lo `test -f 'src/threads.c' || echo '$(srcdir)/'`src/threads.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libwim_la-threads.Tpo src/$(DEPDIR)/libwim_la-threads.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/threads.c' object='src/libwim_la-threads.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -c -o src/libwim_la-threads.lo `test -f 'src/threads.c' || echo '$(srcdir)/'`src/threads.c
+
 src/libwim_la-timestamp.lo: src/timestamp.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -MT src/libwim_la-timestamp.lo -MD -MP -MF src/$(DEPDIR)/libwim_la-timestamp.Tpo -c -o src/libwim_la-timestamp.lo `test -f 'src/timestamp.c' || echo '$(srcdir)/'`src/timestamp.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libwim_la-timestamp.Tpo src/$(DEPDIR)/libwim_la-timestamp.Plo
@@ -1852,13 +1870,6 @@ src/libwim_la-write.lo: src/write.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -c -o src/libwim_la-write.lo `test -f 'src/write.c' || echo '$(srcdir)/'`src/write.c
 
-src/libwim_la-x86_cpu_features.lo: src/x86_cpu_features.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -MT src/libwim_la-x86_cpu_features.lo -MD -MP -MF src/$(DEPDIR)/libwim_la-x86_cpu_features.Tpo -c -o src/libwim_la-x86_cpu_features.lo `test -f 'src/x86_cpu_features.c' || echo '$(srcdir)/'`src/x86_cpu_features.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libwim_la-x86_cpu_features.Tpo src/$(DEPDIR)/libwim_la-x86_cpu_features.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/x86_cpu_features.c' object='src/libwim_la-x86_cpu_features.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -c -o src/libwim_la-x86_cpu_features.lo `test -f 'src/x86_cpu_features.c' || echo '$(srcdir)/'`src/x86_cpu_features.c
-
 src/libwim_la-xml.lo: src/xml.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -MT src/libwim_la-xml.lo -MD -MP -MF src/$(DEPDIR)/libwim_la-xml.Tpo -c -o src/libwim_la-xml.lo `test -f 'src/xml.c' || echo '$(srcdir)/'`src/xml.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libwim_la-xml.Tpo src/$(DEPDIR)/libwim_la-xml.Plo
@@ -1872,6 +1883,13 @@ src/libwim_la-xml_windows.lo: src/xml_windows.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/xml_windows.c' object='src/libwim_la-xml_windows.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -c -o src/libwim_la-xml_windows.lo `test -f 'src/xml_windows.c' || echo '$(srcdir)/'`src/xml_windows.c
+
+src/libwim_la-xmlproc.lo: src/xmlproc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -MT src/libwim_la-xmlproc.lo -MD -MP -MF src/$(DEPDIR)/libwim_la-xmlproc.Tpo -c -o src/libwim_la-xmlproc.lo `test -f 'src/xmlproc.c' || echo '$(srcdir)/'`src/xmlproc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libwim_la-xmlproc.Tpo src/$(DEPDIR)/libwim_la-xmlproc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/xmlproc.c' object='src/libwim_la-xmlproc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -c -o src/libwim_la-xmlproc.lo `test -f 'src/xmlproc.c' || echo '$(srcdir)/'`src/xmlproc.c
 
 src/libwim_la-xpress_compress.lo: src/xpress_compress.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libwim_la_CFLAGS) $(CFLAGS) -MT src/libwim_la-xpress_compress.lo -MD -MP -MF src/$(DEPDIR)/libwim_la-xpress_compress.Tpo -c -o src/libwim_la-xpress_compress.lo `test -f 'src/xpress_compress.c' || echo '$(srcdir)/'`src/xpress_compress.c
@@ -2594,6 +2612,7 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/libwim_la-compress_common.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-compress_parallel.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-compress_serial.Plo
+	-rm -f src/$(DEPDIR)/libwim_la-cpu_features.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-decompress.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-decompress_common.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-delete_image.Plo
@@ -2639,6 +2658,7 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/libwim_la-template.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-test_support.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-textfile.Plo
+	-rm -f src/$(DEPDIR)/libwim_la-threads.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-timestamp.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-unix_apply.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-unix_capture.Plo
@@ -2653,9 +2673,9 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/libwim_la-win32_replacements.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-win32_vss.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-write.Plo
-	-rm -f src/$(DEPDIR)/libwim_la-x86_cpu_features.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-xml.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-xml_windows.Plo
+	-rm -f src/$(DEPDIR)/libwim_la-xmlproc.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-xpress_compress.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-xpress_decompress.Plo
 	-rm -f tests/$(DEPDIR)/tree-cmp.Po
@@ -2721,6 +2741,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/libwim_la-compress_common.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-compress_parallel.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-compress_serial.Plo
+	-rm -f src/$(DEPDIR)/libwim_la-cpu_features.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-decompress.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-decompress_common.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-delete_image.Plo
@@ -2766,6 +2787,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/libwim_la-template.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-test_support.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-textfile.Plo
+	-rm -f src/$(DEPDIR)/libwim_la-threads.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-timestamp.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-unix_apply.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-unix_capture.Plo
@@ -2780,9 +2802,9 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/libwim_la-win32_replacements.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-win32_vss.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-write.Plo
-	-rm -f src/$(DEPDIR)/libwim_la-x86_cpu_features.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-xml.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-xml_windows.Plo
+	-rm -f src/$(DEPDIR)/libwim_la-xmlproc.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-xpress_compress.Plo
 	-rm -f src/$(DEPDIR)/libwim_la-xpress_decompress.Plo
 	-rm -f tests/$(DEPDIR)/tree-cmp.Po
@@ -2841,13 +2863,6 @@ uninstall-man: uninstall-man1
 .PRECIOUS: Makefile
 
 wimlib.pc: config.status
-
-@ENABLE_SSSE3_SHA1_TRUE@src/sha1-ssse3.lo:src/sha1-ssse3.asm
-@ENABLE_SSSE3_SHA1_TRUE@	$(LIBTOOL) --mode=compile $(srcdir)/build-aux/nasm_lt.sh \
-@ENABLE_SSSE3_SHA1_TRUE@	$(NASM) $(NAFLAGS) $(NASM_PLATFORM_FLAGS)			    \
-@ENABLE_SSSE3_SHA1_TRUE@	-DINTEL_SHA1_UPDATE_FUNCNAME=$(NASM_SYMBOL_PREFIX)sha1_transform_blocks_ssse3	    \
-@ENABLE_SSSE3_SHA1_TRUE@	-DINTEL_SHA1_UPDATE_DEFAULT_DISPATCH=$(NASM_SYMBOL_PREFIX)sha1_transform_blocks_default  \
-@ENABLE_SSSE3_SHA1_TRUE@	$< -o $@
 
 ##############################################################################
 #				  Hooks					     #

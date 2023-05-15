@@ -17,17 +17,16 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
 
 #include <errno.h>
-#include <pthread.h>
 #include <io.h>	/* for _get_osfhandle()  */
 #include <fcntl.h>
 
@@ -469,21 +468,6 @@ err_set_errno:
 	return -1;
 }
 
-/* This really could be replaced with _wcserror_s, but this doesn't seem to
- * actually be available in MSVCRT.DLL on Windows XP (perhaps it's statically
- * linked in by Visual Studio...?). */
-int
-win32_strerror_r_replacement(int errnum, wchar_t *buf, size_t buflen)
-{
-	static pthread_mutex_t strerror_lock = PTHREAD_MUTEX_INITIALIZER;
-
-	pthread_mutex_lock(&strerror_lock);
-	mbstowcs(buf, strerror(errnum), buflen);
-	buf[buflen - 1] = '\0';
-	pthread_mutex_unlock(&strerror_lock);
-	return 0;
-}
-
 #define MAX_IO_AMOUNT 1048576
 
 static int
@@ -786,4 +770,4 @@ now_as_wim_timestamp(void)
 	return ((u64)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
 }
 
-#endif /* __WIN32__ */
+#endif /* _WIN32 */

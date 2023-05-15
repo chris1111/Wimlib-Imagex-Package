@@ -19,7 +19,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -48,7 +48,7 @@ struct tagged_item_header {
 	u8 data[0];
 
 	/* then zero-padded to an 8-byte boundary */
-} _aligned_attribute(8);
+} __attribute__((aligned(8)));
 
 /*
  * Retrieve from @inode the first metadata item that is tagged with @tag and

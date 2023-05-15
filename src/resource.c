@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -333,8 +333,8 @@ read_compressed_wim_resource(const struct wim_resource_descriptor * const rdesc,
 		/* Now fill in chunk_offsets from the entries we have read in
 		 * chunk_tab_data.  We break aliasing rules here to avoid having
 		 * to allocate yet another array.  */
-		typedef le64 _may_alias_attribute aliased_le64_t;
-		typedef le32 _may_alias_attribute aliased_le32_t;
+		typedef le64 __attribute__((may_alias)) aliased_le64_t;
+		typedef le32 __attribute__((may_alias)) aliased_le32_t;
 		u64 * chunk_offsets_p = chunk_offsets;
 
 		if (alt_chunk_table) {
@@ -778,7 +778,7 @@ read_blob_prefix(const struct blob_descriptor *blob, u64 size,
 	#ifdef WITH_NTFS_3G
 		[BLOB_IN_NTFS_VOLUME] = read_ntfs_attribute_prefix,
 	#endif
-	#ifdef __WIN32__
+	#ifdef _WIN32
 		[BLOB_IN_WINDOWS_FILE] = read_windows_file_prefix,
 	#endif
 	};
@@ -976,7 +976,7 @@ blobifier_cb(const void *chunk, size_t size, void *_ctx)
 }
 
 struct hasher_context {
-	SHA_CTX sha_ctx;
+	struct sha1_ctx sha_ctx;
 	int flags;
 	struct read_blob_callbacks cbs;
 };
@@ -1015,8 +1015,8 @@ static int
 report_sha1_mismatch(struct blob_descriptor *blob,
 		     const u8 actual_hash[SHA1_HASH_SIZE], bool recover_data)
 {
-	tchar expected_hashstr[SHA1_HASH_SIZE * 2 + 1];
-	tchar actual_hashstr[SHA1_HASH_SIZE * 2 + 1];
+	tchar expected_hashstr[SHA1_HASH_STRING_LEN];
+	tchar actual_hashstr[SHA1_HASH_STRING_LEN];
 
 	wimlib_assert(blob->blob_location != BLOB_NONEXISTENT);
 	wimlib_assert(blob->blob_location != BLOB_IN_ATTACHED_BUFFER);
@@ -1089,7 +1089,7 @@ hasher_end_blob(struct blob_descriptor *blob, int status, void *_ctx)
 	}
 
 	/* Retrieve the final SHA-1 message digest.  */
-	sha1_final(hash, &ctx->sha_ctx);
+	sha1_final(&ctx->sha_ctx, hash);
 
 	/* Set the SHA-1 message digest of the blob, or compare the calculated
 	 * value with stored value.  */

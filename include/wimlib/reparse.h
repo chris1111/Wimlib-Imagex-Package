@@ -14,8 +14,8 @@ struct blob_table;
  * On-disk format of a reparse point buffer.  See:
  *	https://msdn.microsoft.com/en-us/library/dd541671.aspx
  *
- * Note: we are not using _packed_attribute for this structure, so only cast to
- * this if properly aligned!
+ * Note: we are not using __attribute__((packed)) for this structure, so only
+ * cast to this if properly aligned!
  */
 struct reparse_buffer_disk {
 	le32 rptag;
@@ -49,7 +49,7 @@ struct reparse_buffer_disk {
 
 #define REPARSE_DATA_MAX_SIZE (REPARSE_POINT_MAX_SIZE - REPARSE_DATA_OFFSET)
 
-static _unused_attribute void
+static void __attribute__((unused))
 check_reparse_buffer_disk(void)
 {
 	STATIC_ASSERT(offsetof(struct reparse_buffer_disk, rpdata) == 8);
@@ -86,25 +86,25 @@ link_is_relative_symlink(const struct link_reparse_point *link)
 	       (link->symlink_flags & SYMBOLIC_LINK_RELATIVE);
 }
 
-extern void
+void
 complete_reparse_point(struct reparse_buffer_disk *rpbuf,
 		       const struct wim_inode *inode, u16 blob_size);
 
-extern int
+int
 parse_link_reparse_point(const struct reparse_buffer_disk *rpbuf, u16 rpbuflen,
 			 struct link_reparse_point *link);
 
-extern int
+int
 make_link_reparse_point(const struct link_reparse_point *link,
 			struct reparse_buffer_disk *rpbuf, u16 *rpbuflen_ret);
 
-#ifndef __WIN32__
-extern int
+#ifndef _WIN32
+int
 wim_inode_readlink(const struct wim_inode *inode, char *buf, size_t bufsize,
 		   const struct blob_descriptor *blob,
 		   const char *altroot, size_t altroot_len);
 
-extern int
+int
 wim_inode_set_symlink(struct wim_inode *inode, const char *target,
 		      struct blob_table *blob_table);
 #endif

@@ -19,7 +19,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -506,8 +506,8 @@ end_chunk_table(struct write_blobs_ctx *ctx, u64 res_actual_size,
 						0 != (ctx->write_resource_flags &
 						      WRITE_RESOURCE_FLAG_SOLID));
 
-	typedef le64 _may_alias_attribute aliased_le64_t;
-	typedef le32 _may_alias_attribute aliased_le32_t;
+	typedef le64 __attribute__((may_alias)) aliased_le64_t;
+	typedef le32 __attribute__((may_alias)) aliased_le32_t;
 
 	if (chunk_entry_size == 4) {
 		aliased_le32_t *entries = (aliased_le32_t*)ctx->chunk_csizes;
@@ -1737,7 +1737,7 @@ write_wim_resource_from_buffer(const void *buf,
 	}
 
 	blob_set_is_located_in_attached_buffer(&blob, (void *)buf, buf_size);
-	sha1_buffer(buf, buf_size, blob.hash);
+	sha1(buf, buf_size, blob.hash);
 	blob.unhashed = 0;
 	blob.is_metadata = is_metadata;
 
@@ -3274,7 +3274,7 @@ overwrite_wim_via_tmpfile(WIMStruct *wim, int write_flags, unsigned num_threads)
 	if (ret) {
 		ERROR_WITH_ERRNO("Failed to rename `%"TS"' to `%"TS"'",
 				 tmpfile, wim->filename);
-	#ifdef __WIN32__
+	#ifdef _WIN32
 		if (ret < 0)
 	#endif
 		{

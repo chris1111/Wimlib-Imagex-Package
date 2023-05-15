@@ -17,9 +17,10 @@ AM_CFLAGS	= -std=gnu99 $(PLATFORM_CFLAGS) -fno-common	\
 
 AM_LDFLAGS	= $(PLATFORM_LDFLAGS)
 
-EXTRA_DIST	= README README.WINDOWS				\
+EXTRA_DIST	= README.md README.WINDOWS.md NEWS.md		\
 		  COPYING COPYING.GPLv3	COPYING.LGPLv3		\
-		  examples
+		  examples					\
+		  tools/get-version-number.sh tools/windows-build.sh
 
 ##############################################################################
 #				Library					     #
@@ -40,6 +41,7 @@ libwim_la_SOURCES =		\
 	src/compress_common.c	\
 	src/compress_parallel.c	\
 	src/compress_serial.c	\
+	src/cpu_features.c	\
 	src/decompress.c	\
 	src/decompress_common.c	\
 	src/delete_image.c	\
@@ -82,15 +84,16 @@ libwim_la_SOURCES =		\
 	src/tagged_items.c	\
 	src/template.c		\
 	src/textfile.c		\
+	src/threads.c		\
 	src/timestamp.c		\
 	src/update_image.c	\
 	src/util.c		\
 	src/verify.c		\
 	src/wim.c		\
 	src/write.c		\
-	src/x86_cpu_features.c	\
 	src/xml.c		\
 	src/xml_windows.c	\
+	src/xmlproc.c		\
 	src/xpress_compress.c	\
 	src/xpress_decompress.c \
 	include/wimlib/alloca.h		\
@@ -105,6 +108,7 @@ libwim_la_SOURCES =		\
 	include/wimlib/compressor_ops.h	\
 	include/wimlib/compress_common.h	\
 	include/wimlib/chunk_compressor.h	\
+	include/wimlib/cpu_features.h	\
 	include/wimlib/decompressor_ops.h	\
 	include/wimlib/decompress_common.h	\
 	include/wimlib/dentry.h		\
@@ -143,6 +147,7 @@ libwim_la_SOURCES =		\
 	include/wimlib/solid.h		\
 	include/wimlib/tagged_items.h	\
 	include/wimlib/textfile.h	\
+	include/wimlib/threads.h	\
 	include/wimlib/timestamp.h	\
 	include/wimlib/types.h		\
 	include/wimlib/unaligned.h	\
@@ -150,10 +155,10 @@ libwim_la_SOURCES =		\
 	include/wimlib/util.h		\
 	include/wimlib/wim.h		\
 	include/wimlib/write.h		\
-	include/wimlib/x86_cpu_features.h	\
 	include/wimlib/xattr.h		\
 	include/wimlib/xml.h		\
 	include/wimlib/xml_windows.h	\
+	include/wimlib/xmlproc.h	\
 	include/wimlib/xpress_constants.h
 
 if WITH_NTFS_3G
@@ -184,39 +189,26 @@ endif
 if ENABLE_TEST_SUPPORT
 libwim_la_SOURCES += src/test_support.c		\
 		     include/wimlib/test_support.h
+if !WINDOWS_NATIVE_BUILD
+PLATFORM_LIBS += -lm
+endif
 endif
 
 libwim_la_CFLAGS =		\
+	-DBUILDING_WIMLIB	\
 	$(AM_CFLAGS)		\
 	$(PTHREAD_CFLAGS)	\
-	$(LIBXML2_CFLAGS)	\
 	$(LIBNTFS_3G_CFLAGS)	\
-	$(LIBFUSE_CFLAGS)	\
-	$(LIBCRYPTO_CFLAGS)
+	$(LIBFUSE_CFLAGS)
 
-libwim_la_LDFLAGS = $(AM_LDFLAGS) -version-info 36:0:21
+libwim_la_LDFLAGS = $(AM_LDFLAGS) -version-info 38:0:23
 
 libwim_la_LIBADD =		\
 	$(PTHREAD_LIBS)		\
-	$(LIBXML2_LIBS)		\
 	$(LIBNTFS_3G_LIBS)	\
 	$(LIBFUSE_LIBS)		\
 	$(LIBRT_LIBS)		\
-	$(LIBCRYPTO_LIBS)	\
 	$(PLATFORM_LIBS)
-
-if ENABLE_SSSE3_SHA1
-libwim_la_SOURCES += src/sha1-ssse3.asm
-libwim_la_LIBADD += src/sha1-ssse3.lo
-
-src/sha1-ssse3.lo:src/sha1-ssse3.asm
-	$(LIBTOOL) --mode=compile $(srcdir)/build-aux/nasm_lt.sh \
-	$(NASM) $(NAFLAGS) $(NASM_PLATFORM_FLAGS)			    \
-	-DINTEL_SHA1_UPDATE_FUNCNAME=$(NASM_SYMBOL_PREFIX)sha1_transform_blocks_ssse3	    \
-	-DINTEL_SHA1_UPDATE_DEFAULT_DISPATCH=$(NASM_SYMBOL_PREFIX)sha1_transform_blocks_default  \
-	$< -o $@
-endif
-EXTRA_DIST += build-aux/nasm_lt.sh
 
 ##############################################################################
 #				Programs				     #

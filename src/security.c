@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (C) 2012, 2013, 2014 Eric Biggers
+ * Copyright 2012-2023 Eric Biggers
  *
  * This file is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -37,7 +37,7 @@ struct wim_security_data_disk {
 	le32 total_length;
 	le32 num_entries;
 	le64 sizes[];
-} _packed_attribute;
+} __attribute__((packed));
 
 struct wim_security_data *
 new_wim_security_data(void)
@@ -242,10 +242,10 @@ void
 rollback_new_security_descriptors(struct wim_sd_set *sd_set)
 {
 	struct wim_security_data *sd = sd_set->sd;
-	u8 **descriptors = sd->descriptors + sd_set->orig_num_entries;
-	u32 num_entries  = sd->num_entries - sd_set->orig_num_entries;
-	while (num_entries--)
-		FREE(*descriptors++);
+	u32 i;
+
+	for (i = sd_set->orig_num_entries; i < sd->num_entries; i++)
+		FREE(sd->descriptors[i]);
 	sd->num_entries = sd_set->orig_num_entries;
 }
 
@@ -307,7 +307,7 @@ sd_set_add_sd(struct wim_sd_set *sd_set, const char *descriptor, size_t size)
 	struct wim_security_data *sd;
 	bool bret;
 
-	sha1_buffer(descriptor, size, hash);
+	sha1(descriptor, size, hash);
 
 	security_id = lookup_sd(sd_set, hash);
 	if (security_id >= 0) /* Identical descriptor already exists */
@@ -378,7 +378,7 @@ init_sd_set(struct wim_sd_set *sd_set, struct wim_security_data *sd)
 			ret = WIMLIB_ERR_NOMEM;
 			goto out_destroy_sd_set;
 		}
-		sha1_buffer(sd->descriptors[i], sd->sizes[i], new->hash);
+		sha1(sd->descriptors[i], sd->sizes[i], new->hash);
 		new->security_id = i;
 		if (!insert_sd_node(sd_set, new))
 			FREE(new); /* Ignore duplicate security descriptor */

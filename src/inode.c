@@ -21,7 +21,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -485,7 +485,7 @@ int
 blob_not_found_error(const struct wim_inode *inode, const u8 *hash)
 {
 	if (wimlib_print_errors) {
-		tchar hashstr[SHA1_HASH_SIZE * 2 + 1];
+		tchar hashstr[SHA1_HASH_STRING_LEN];
 
 		sprint_hash(hash, hashstr);
 

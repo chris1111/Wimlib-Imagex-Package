@@ -16,7 +16,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -30,7 +30,7 @@
 #include "wimlib/file_io.h"
 #include "wimlib/util.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #  include "wimlib/win32.h"
 #  define read win32_read
 #  define write win32_write

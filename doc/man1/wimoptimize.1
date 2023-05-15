@@ -1,4 +1,4 @@
-.TH WIMOPTIMIZE "1" "September 2022" "wimlib 1.13.6" "User Commands"
+.TH WIMOPTIMIZE "1" "April 2023" "wimlib 1.14.1" "User Commands"
 .SH NAME
 wimoptimize \- Optimize a WIM archive
 .SH SYNOPSIS
@@ -123,6 +123,14 @@ consider using 'wimexport install.wim all install.esd --solid'.):
 wimoptimize install.wim --solid
 .br
 mv install.wim install.esd
+.RE
+.PP
+Turn 'install.esd' back into 'install.wim':
+.RS
+.PP
+wimoptimize install.esd --compress=LZX
+.br
+mv install.esd install.wim
 .RE
 .SH SEE ALSO
 .BR wimlib-imagex (1)

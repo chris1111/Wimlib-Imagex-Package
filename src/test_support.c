@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2015-2018 Eric Biggers
+ * Copyright 2015-2023 Eric Biggers
  *
  * This file is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 /*
@@ -38,6 +38,11 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#ifdef _WIN32
+#  include <windows.h>
+#  include <sddl.h>
+#  undef ERROR
+#endif
 
 #include "wimlib.h"
 #include "wimlib/endianness.h"
@@ -50,6 +55,7 @@
 #include "wimlib/scan.h"
 #include "wimlib/security_descriptor.h"
 #include "wimlib/test_support.h"
+#include "wimlib/timestamp.h"
 #include "wimlib/unix_data.h"
 #include "wimlib/xattr.h"
 
@@ -63,20 +69,26 @@ struct generation_context {
 	bool metadata_only;
 };
 
+static u64 random_state;
+
+WIMLIBAPI void
+wimlib_seed_random(u64 seed)
+{
+	random_state = seed;
+}
+
 static u32
 rand32(void)
 {
-	static u64 state = 0x55DB93D0AB838771;
-
-	/* A simple linear congruential generator  */
-	state = (state * 25214903917 + 11) & ((1ULL << 48) - 1);
-	return state >> 16;
+	/* A simple linear congruential generator */
+	random_state = (random_state * 25214903917 + 11) % (1ULL << 48);
+	return random_state >> 16;
 }
 
 static bool
 randbool(void)
 {
-	return (rand32() & 1) != 0;
+	return rand32() % 2;
 }
 
 static u8
@@ -100,10 +112,18 @@ rand64(void)
 static u64
 generate_random_timestamp(void)
 {
-	/* When setting timestamps on Windows:
+	u64 ts;
+
+	if (randbool())
+		ts = rand64();
+	else
+		ts = time_t_to_wim_timestamp(rand64() % (1ULL << 34));
+	/*
+	 * When setting timestamps on Windows:
 	 * - 0 is a special value meaning "not specified"
-	 * - if the high bit is set you get STATUS_INVALID_PARAMETER  */
-	return (1 + rand64()) & ~(1ULL << 63);
+	 * - if the high bit is set you get STATUS_INVALID_PARAMETER
+	 */
+	return max(1, ts % (1ULL << 63));
 }
 
 static inline bool
@@ -126,7 +146,7 @@ is_valid_windows_filename_char(utf16lechar c)
 static inline bool
 is_valid_filename_char(utf16lechar c)
 {
-#ifdef __WIN32__
+#ifdef _WIN32
 	return is_valid_windows_filename_char(c);
 #else
 	return c != cpu_to_le16('\0') && c != cpu_to_le16('/');
@@ -168,7 +188,7 @@ retry:
 	/* Generate the characters in the name. */
 	for (int i = 0; i < len; i++) {
 		do {
-			name[i] = rand16();
+			name[i] = cpu_to_le16(rand16());
 		} while (!is_valid_filename_char(name[i]));
 	}
 
@@ -385,7 +405,7 @@ generate_random_security_descriptor(void *_desc, struct generation_context *ctx)
 static bool
 am_root(void)
 {
-#ifdef __WIN32__
+#ifdef _WIN32
 	return false;
 #else
 	return (getuid() == 0);
@@ -395,7 +415,7 @@ am_root(void)
 static u32
 generate_uid(void)
 {
-#ifdef __WIN32__
+#ifdef _WIN32
 	return 0;
 #else
 	if (am_root())
@@ -407,7 +427,7 @@ generate_uid(void)
 static u32
 generate_gid(void)
 {
-#ifdef __WIN32__
+#ifdef _WIN32
 	return 0;
 #else
 	if (am_root())
@@ -416,7 +436,7 @@ generate_gid(void)
 #endif
 }
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #  ifndef S_IFLNK
 #    define S_IFLNK  0120000
 #  endif
@@ -475,7 +495,7 @@ set_random_xattrs(struct wim_inode *inode)
 	struct wim_xattr_entry *entry = (void *)entries;
 	size_t entries_size;
 	struct wimlib_unix_data unix_data;
-#ifdef __WIN32__
+#ifdef _WIN32
 	const char *prefix = "";
 #else
 	const char *prefix = "user.";
@@ -501,7 +521,7 @@ set_random_xattrs(struct wim_inode *inode)
 		int value_len = rand32() % 64;
 		u8 *p;
 
-	#ifdef __WIN32__
+	#ifdef _WIN32
 		if (value_len == 0)
 			value_len++;
 	#endif
@@ -523,7 +543,7 @@ set_random_xattrs(struct wim_inode *inode)
 			*p++ = 'A' + i;
 			for (int j = 1; j < name_len; j++) {
 				do {
-				#ifdef __WIN32__
+				#ifdef _WIN32
 					*p = 'A' + rand8() % 26;
 				#else
 					*p = rand8();
@@ -569,7 +589,7 @@ set_random_metadata(struct wim_inode *inode, struct generation_context *ctx)
 
 	/* Security descriptor  */
 	if (randbool()) {
-		char desc[8192] _aligned_attribute(8);
+		char desc[8192] __attribute__((aligned(8)));
 		size_t size;
 
 		size = generate_random_security_descriptor(desc, ctx);
@@ -801,7 +821,8 @@ set_random_streams(struct wim_inode *inode, struct generation_context *ctx)
 			ret = add_random_data_stream(inode, ctx, stream_name);
 			if (ret)
 				return ret;
-			stream_name[0] += cpu_to_le16(1);
+			stream_name[0] =
+				cpu_to_le16(le16_to_cpu(stream_name[0]) + 1);
 		}
 	}
 
@@ -903,7 +924,7 @@ retry:
 	 * within the same directory.  */
 	hash = 0;
 	for (const utf16lechar *p = name; *p; p++)
-		hash = (hash * 31) + *p;
+		hash = (hash * 31) + le16_to_cpu(*p);
 	FREE(child->d_short_name);
 	child->d_short_name = memdup(name, (name_len + 1) * 2);
 	child->d_short_name_nbytes = name_len * 2;
@@ -1247,14 +1268,11 @@ cmp_attributes(const struct wim_inode *inode1,
 	      !inode_is_symlink(inode1)))
 		goto mismatch;
 
-	/* SPARSE_FILE may be cleared in UNIX and NTFS-3G modes, or in Windows
-	 * mode if the inode is a directory. */
+	/* SPARSE_FILE may be cleared.  This is true in UNIX and NTFS-3G modes.
+	 * In Windows mode it should only be true for directories, but even on
+	 * nondirectories it doesn't work 100% of the time for some reason. */
 	if ((changed & FILE_ATTRIBUTE_SPARSE_FILE) &&
-	    !((cleared & FILE_ATTRIBUTE_SPARSE_FILE) &&
-	      ((cmp_flags & (WIMLIB_CMP_FLAG_UNIX_MODE |
-			     WIMLIB_CMP_FLAG_NTFS_3G_MODE)) ||
-	       ((cmp_flags & WIMLIB_CMP_FLAG_WINDOWS_MODE) &&
-		(inode1->i_attributes & FILE_ATTRIBUTE_DIRECTORY)))))
+	    !(cleared & FILE_ATTRIBUTE_SPARSE_FILE))
 		goto mismatch;
 
 	/* COMPRESSED may change in UNIX and NTFS-3G modes.  (It *should* be
@@ -1289,6 +1307,73 @@ mismatch:
 		}
 	}
 	return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;
+}
+
+static void
+print_security_descriptor(const void *desc, size_t size, FILE *fp)
+{
+	print_byte_field(desc, size, fp);
+#ifdef _WIN32
+	wchar_t *str = NULL;
+	ConvertSecurityDescriptorToStringSecurityDescriptorW(
+			(void *)desc,
+			SDDL_REVISION_1,
+			OWNER_SECURITY_INFORMATION |
+				GROUP_SECURITY_INFORMATION |
+				DACL_SECURITY_INFORMATION |
+				SACL_SECURITY_INFORMATION,
+			&str,
+			NULL);
+	if (str) {
+		fprintf(fp, " [ %ls ]", str);
+		LocalFree(str);
+	}
+#endif /* _WIN32 */
+}
+
+static int
+cmp_security(const struct wim_inode *inode1, const struct wim_inode *inode2,
+	     const struct wim_image_metadata *imd1,
+	     const struct wim_image_metadata *imd2, int cmp_flags)
+{
+	/*
+	 * Unfortunately this has to be disabled on Windows for now, since
+	 * Windows changes security descriptors upon backup/restore in ways that
+	 * are difficult to replicate...
+	 */
+	if (cmp_flags & WIMLIB_CMP_FLAG_WINDOWS_MODE)
+		return 0;
+
+	if (inode_has_security_descriptor(inode1)) {
+		if (inode_has_security_descriptor(inode2)) {
+			const void *desc1 = imd1->security_data->descriptors[inode1->i_security_id];
+			const void *desc2 = imd2->security_data->descriptors[inode2->i_security_id];
+			size_t size1 = imd1->security_data->sizes[inode1->i_security_id];
+			size_t size2 = imd2->security_data->sizes[inode2->i_security_id];
+
+			if (size1 != size2 || memcmp(desc1, desc2, size1)) {
+				ERROR("Security descriptor of %"TS" differs!",
+				      inode_any_full_path(inode1));
+				fprintf(stderr, "desc1=");
+				print_security_descriptor(desc1, size1, stderr);
+				fprintf(stderr, "\ndesc2=");
+				print_security_descriptor(desc2, size2, stderr);
+				fprintf(stderr, "\n");
+				return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;
+			}
+		} else if (!(cmp_flags & WIMLIB_CMP_FLAG_UNIX_MODE)) {
+			ERROR("%"TS" has a security descriptor in the first image but "
+			      "not in the second image!", inode_any_full_path(inode1));
+			return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;
+		}
+	} else if (inode_has_security_descriptor(inode2)) {
+		/* okay --- consider it acceptable if a default security
+		 * descriptor was assigned  */
+		/*ERROR("%"TS" has a security descriptor in the second image but "*/
+		      /*"not in the first image!", inode_any_full_path(inode1));*/
+		/*return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;*/
+	}
+	return 0;
 }
 
 static int
@@ -1500,26 +1585,60 @@ cmp_xattrs(const struct wim_inode *inode1, const struct wim_inode *inode2,
 	}
 }
 
+/*
+ * ext4 only supports timestamps from years 1901 to 2446, more specifically the
+ * range [-0x80000000, 0x380000000) seconds relative to the start of UNIX epoch.
+ */
+static bool
+in_ext4_range(u64 ts)
+{
+	return ts >= time_t_to_wim_timestamp(-0x80000000LL) &&
+		ts < time_t_to_wim_timestamp(0x380000000LL);
+}
+
+static bool
+timestamps_differ(u64 ts1, u64 ts2, int cmp_flags)
+{
+	if (ts1 == ts2)
+		return false;
+	if ((cmp_flags & WIMLIB_CMP_FLAG_EXT4) &&
+	    (!in_ext4_range(ts1) || !in_ext4_range(ts2)))
+		return false;
+	return true;
+}
+
 static int
 cmp_timestamps(const struct wim_inode *inode1, const struct wim_inode *inode2,
 	       int cmp_flags)
 {
-	if (inode1->i_creation_time != inode2->i_creation_time &&
+	if (timestamps_differ(inode1->i_creation_time,
+			      inode2->i_creation_time, cmp_flags) &&
 	    !(cmp_flags & WIMLIB_CMP_FLAG_UNIX_MODE)) {
-		ERROR("Creation time of %"TS" differs",
-		      inode_any_full_path(inode1));
+		ERROR("Creation time of %"TS" differs; %"PRIu64" != %"PRIu64,
+		      inode_any_full_path(inode1),
+		      inode1->i_creation_time, inode2->i_creation_time);
 		return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;
 	}
 
-	if (inode1->i_last_write_time != inode2->i_last_write_time) {
-		ERROR("Last write time of %"TS" differs",
-		      inode_any_full_path(inode1));
+	if (timestamps_differ(inode1->i_last_write_time,
+			      inode2->i_last_write_time, cmp_flags)) {
+		ERROR("Last write time of %"TS" differs; %"PRIu64" != %"PRIu64,
+		      inode_any_full_path(inode1),
+		      inode1->i_last_write_time, inode2->i_last_write_time);
 		return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;
 	}
 
-	if (inode1->i_last_access_time != inode2->i_last_access_time) {
-		ERROR("Last access time of %"TS" differs",
-		      inode_any_full_path(inode1));
+	if (timestamps_differ(inode1->i_last_access_time,
+			      inode2->i_last_access_time, cmp_flags) &&
+	    /*
+	     * On Windows, sometimes a file's last access time will end up as
+	     * the current time rather than the expected time.  Maybe caused by
+	     * some OS process scanning the files?
+	     */
+	    !(cmp_flags & WIMLIB_CMP_FLAG_WINDOWS_MODE)) {
+		ERROR("Last access time of %"TS" differs; %"PRIu64" != %"PRIu64,
+		      inode_any_full_path(inode1),
+		      inode1->i_last_access_time, inode2->i_last_access_time);
 		return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;
 	}
 
@@ -1539,30 +1658,9 @@ cmp_inodes(const struct wim_inode *inode1, const struct wim_inode *inode2,
 		return ret;
 
 	/* Compare security descriptors  */
-	if (inode_has_security_descriptor(inode1)) {
-		if (inode_has_security_descriptor(inode2)) {
-			const void *desc1 = imd1->security_data->descriptors[inode1->i_security_id];
-			const void *desc2 = imd2->security_data->descriptors[inode2->i_security_id];
-			size_t size1 = imd1->security_data->sizes[inode1->i_security_id];
-			size_t size2 = imd2->security_data->sizes[inode2->i_security_id];
-
-			if (size1 != size2 || memcmp(desc1, desc2, size1)) {
-				ERROR("Security descriptor of %"TS" differs!",
-				      inode_any_full_path(inode1));
-				return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;
-			}
-		} else if (!(cmp_flags & WIMLIB_CMP_FLAG_UNIX_MODE)) {
-			ERROR("%"TS" has a security descriptor in the first image but "
-			      "not in the second image!", inode_any_full_path(inode1));
-			return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;
-		}
-	} else if (inode_has_security_descriptor(inode2)) {
-		/* okay --- consider it acceptable if a default security
-		 * descriptor was assigned  */
-		/*ERROR("%"TS" has a security descriptor in the second image but "*/
-		      /*"not in the first image!", inode_any_full_path(inode1));*/
-		/*return WIMLIB_ERR_IMAGES_ARE_DIFFERENT;*/
-	}
+	ret = cmp_security(inode1, inode2, imd1, imd2, cmp_flags);
+	if (ret)
+		return ret;
 
 	/* Compare streams  */
 	for (unsigned i = 0; i < inode1->i_num_streams; i++) {

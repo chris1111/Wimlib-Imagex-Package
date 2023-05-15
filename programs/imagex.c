@@ -6,7 +6,7 @@
  */
 
 /*
- * Copyright (C) 2012-2021 Eric Biggers
+ * Copyright 2012-2023 Eric Biggers
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -48,10 +48,10 @@
 
 #define WIMLIB_COMPRESSION_TYPE_INVALID (-1)
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #  include "imagex-win32.h"
 #  define print_security_descriptor     win32_print_security_descriptor
-#else /* __WIN32__ */
+#else /* _WIN32 */
 #  include <getopt.h>
 #  include <langinfo.h>
 #  define print_security_descriptor	default_print_security_descriptor
@@ -62,13 +62,13 @@ static inline void set_fd_to_binary_mode(int fd)
 #ifndef HAVE_GETOPT_LONG_ONLY
 #  define getopt_long_only getopt_long
 #endif
-#endif /* !__WIN32 */
+#endif /* !_WIN32 */
 
 /* Don't confuse the user by presenting the mounting commands on Windows when
  * they will never work.  However on UNIX-like systems we always present them,
  * even if WITH_FUSE is not defined at this point, as to not tie the build of
  * wimlib-imagex to a specific build of wimlib.  */
-#ifdef __WIN32__
+#ifdef _WIN32
 #  define WIM_MOUNTING_SUPPORTED 0
 #else
 #  define WIM_MOUNTING_SUPPORTED 1
@@ -416,14 +416,14 @@ static const struct option unmount_options[] = {
 static const struct option update_options[] = {
 	/* Careful: some of the options here set the defaults for update
 	 * commands, but the flags given to an actual update command (and not to
-	 * `imagex update' itself are also handled in
-	 * update_command_add_option().  */
+	 * wimupdate itself) are also handled in update_command_add_option(). */
 	{T("threads"),     required_argument, NULL, IMAGEX_THREADS_OPTION},
 	{T("check"),       no_argument,       NULL, IMAGEX_CHECK_OPTION},
 	{T("include-integrity"), no_argument, NULL, IMAGEX_INCLUDE_INTEGRITY_OPTION},
 	{T("rebuild"),     no_argument,       NULL, IMAGEX_REBUILD_OPTION},
 	{T("command"),     required_argument, NULL, IMAGEX_COMMAND_OPTION},
 	{T("wimboot-config"), required_argument, NULL, IMAGEX_WIMBOOT_CONFIG_OPTION},
+	{T("ref"),	   required_argument, NULL, IMAGEX_REF_OPTION},
 
 	/* Default delete options */
 	{T("force"),       no_argument,       NULL, IMAGEX_FORCE_OPTION},
@@ -1055,12 +1055,12 @@ stdin_get_contents(size_t *len_ret)
 static tchar *
 translate_text_to_tstr(char *text, size_t num_bytes, size_t *num_tchars_ret)
 {
-#ifndef __WIN32__
+#ifndef _WIN32
 	/* On non-Windows, assume an ASCII-compatible encoding, such as UTF-8.
 	 * */
 	*num_tchars_ret = num_bytes;
 	return text;
-#else /* !__WIN32__ */
+#else /* !_WIN32 */
 	/* On Windows, translate the text to UTF-16LE */
 	wchar_t *text_wstr;
 	size_t num_wchars;
@@ -1087,7 +1087,7 @@ translate_text_to_tstr(char *text, size_t num_bytes, size_t *num_tchars_ret)
 	}
 	*num_tchars_ret = num_wchars;
 	return text_wstr;
-#endif /* __WIN32__ */
+#endif /* _WIN32 */
 }
 
 static tchar *
@@ -1265,7 +1265,7 @@ imagex_progress_func(enum wimlib_progress_msg msg,
 			 * default installation.  On UNIX-like systems, warn the
 			 * user when fixing the target of an absolute symbolic
 			 * link, so they know to disable this if they want.  */
-		#ifndef __WIN32__
+		#ifndef _WIN32
 			imagex_printf(T("\nWARNING: Adjusted target of "
 					"absolute symbolic link \"%"TS"\"\n"
 					"           (Use --norpfix to capture "
@@ -1529,7 +1529,7 @@ update_command_add_option(int op, const tchar *option,
 	return recognized;
 }
 
-/* How many nonoption arguments each `imagex update' command expects */
+/* How many nonoption arguments each wimupdate command expects */
 static const unsigned update_command_num_nonoptions[] = {
 	[WIMLIB_UPDATE_OP_ADD] = 2,
 	[WIMLIB_UPDATE_OP_DELETE] = 1,
@@ -1561,7 +1561,7 @@ update_command_add_nonoption(int op, const tchar *nonoption,
 }
 
 /*
- * Parse a command passed on stdin to `imagex update'.
+ * Parse a command passed on stdin to wimupdate.
  *
  * @line:	Text of the command.
  * @len:	Length of the line, including a null terminator
@@ -1817,7 +1817,7 @@ imagex_apply(int argc, tchar **argv, int cmd)
 			goto out_wimlib_free;
 	}
 
-#ifndef __WIN32__
+#ifndef _WIN32
 	{
 		/* Interpret a regular file or block device target as an NTFS
 		 * volume.  */
@@ -2040,7 +2040,7 @@ imagex_capture_or_append(int argc, tchar **argv, int cmd)
 					template_image_name_or_num = optarg;
 				}
 			}
-		#ifdef __WIN32__
+		#ifdef _WIN32
 			imagex_printf(T("[WARNING] '--update-of' is unreliable on Windows!\n"));
 		#endif
 			break;
@@ -2278,7 +2278,7 @@ imagex_capture_or_append(int argc, tchar **argv, int cmd)
 			goto out_free_wim;
 	}
 
-#ifndef __WIN32__
+#ifndef _WIN32
 	/* Detect if source is regular file or block device and set NTFS volume
 	 * capture mode.  */
 	if (!source_list) {
@@ -2721,7 +2721,7 @@ print_blobs(WIMStruct *wim)
 	wimlib_iterate_lookup_table(wim, 0, print_resource, NULL);
 }
 
-#ifndef __WIN32__
+#ifndef _WIN32
 static void
 default_print_security_descriptor(const uint8_t *sd, size_t size)
 {
@@ -3857,6 +3857,7 @@ imagex_optimize(int argc, tchar **argv, int cmd)
 	int solid_ctype = WIMLIB_COMPRESSION_TYPE_INVALID;
 	int ret;
 	WIMStruct *wim;
+	struct wimlib_wim_info info;
 	const tchar *wimfile;
 	off_t old_size;
 	off_t new_size;
@@ -3900,6 +3901,9 @@ imagex_optimize(int argc, tchar **argv, int cmd)
 		case IMAGEX_SOLID_OPTION:
 			write_flags |= WIMLIB_WRITE_FLAG_SOLID;
 			write_flags |= WIMLIB_WRITE_FLAG_RECOMPRESS;
+			/* Reset the non-solid compression type to LZMS. */
+			if (compression_type == WIMLIB_COMPRESSION_TYPE_INVALID)
+				compression_type = WIMLIB_COMPRESSION_TYPE_LZMS;
 			break;
 		case IMAGEX_NO_SOLID_SORT_OPTION:
 			write_flags |= WIMLIB_WRITE_FLAG_NO_SOLID_SORT;
@@ -3935,11 +3939,18 @@ imagex_optimize(int argc, tchar **argv, int cmd)
 	if (ret)
 		goto out;
 
-	if (compression_type != WIMLIB_COMPRESSION_TYPE_INVALID) {
+	wimlib_get_wim_info(wim, &info);
+
+	if (compression_type != WIMLIB_COMPRESSION_TYPE_INVALID &&
+	    compression_type != info.compression_type) {
 		/* Change compression type.  */
 		ret = wimlib_set_output_compression_type(wim, compression_type);
 		if (ret)
 			goto out_wimlib_free;
+
+		/* Reset the chunk size. */
+		if (chunk_size == UINT32_MAX)
+			chunk_size = 0;
 	}
 
 	if (chunk_size != UINT32_MAX) {
@@ -4006,7 +4017,7 @@ imagex_split(int argc, tchar **argv, int cmd)
 	int c;
 	int open_flags = 0;
 	int write_flags = 0;
-	unsigned long part_size;
+	uint64_t part_size;
 	tchar *tmp;
 	int ret;
 	WIMStruct *wim;
@@ -4145,6 +4156,7 @@ imagex_update(int argc, tchar **argv, int cmd)
 				WIMLIB_ADD_FLAG_WINCONFIG;
 	int default_delete_flags = 0;
 	unsigned num_threads = 0;
+	STRING_LIST(refglobs);
 	int c;
 	tchar *cmd_file_contents;
 	size_t cmd_file_nchars;
@@ -4187,6 +4199,13 @@ imagex_update(int argc, tchar **argv, int cmd)
 			break;
 		case IMAGEX_WIMBOOT_CONFIG_OPTION:
 			wimboot_config = optarg;
+			break;
+		case IMAGEX_REF_OPTION:
+			ret = string_list_append(&refglobs, optarg);
+			if (ret)
+				goto out;
+			/* assume delta WIM */
+			write_flags |= WIMLIB_WRITE_FLAG_SKIP_EXTERNAL_WIMS;
 			break;
 		/* Default delete options */
 		case IMAGEX_FORCE_OPTION:
@@ -4238,7 +4257,7 @@ imagex_update(int argc, tchar **argv, int cmd)
 	ret = wimlib_open_wim_with_progress(wimfile, open_flags, &wim,
 					    imagex_progress_func, NULL);
 	if (ret)
-		goto out_free_command_str;
+		goto out;
 
 	if (argc >= 2) {
 		/* Image explicitly specified.  */
@@ -4261,6 +4280,10 @@ imagex_update(int argc, tchar **argv, int cmd)
 		}
 		image = 1;
 	}
+
+	ret = wim_reference_globs(wim, &refglobs, open_flags);
+	if (ret)
+		goto out_wimlib_free;
 
 	/* Read update commands from standard input, or the command string if
 	 * specified.  */
@@ -4341,15 +4364,16 @@ out_free_cmd_file_contents:
 	free(cmd_file_contents);
 out_wimlib_free:
 	wimlib_free(wim);
-out_free_command_str:
+out:
 	free(command_str);
+	string_list_destroy(&refglobs);
 	return ret;
 
 out_usage:
 	usage(CMD_UPDATE, stderr);
 out_err:
 	ret = -1;
-	goto out_free_command_str;
+	goto out;
 }
 
 /* Verify a WIM file.  */
@@ -4460,7 +4484,7 @@ static const struct imagex_command imagex_commands[] = {
 	[CMD_VERIFY]   = {T("verify"),   imagex_verify},
 };
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
    /* Can be a directory or source list file.  But source list file is probably
     * a rare use case, so just say directory.  */
@@ -4612,8 +4636,8 @@ version(void)
 	static const tchar * const fmt =
 	T(
 "wimlib-imagex " PACKAGE_VERSION " (using wimlib %"TS")\n"
-"Copyright (C) 2012-2021 Eric Biggers\n"
-"License GPLv3+; GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n"
+"Copyright 2012-2023 Eric Biggers\n"
+"License GPLv3+; GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n"
 "This is free software: you are free to change and redistribute it.\n"
 "There is NO WARRANTY, to the extent permitted by law.\n"
 "\n"
@@ -4666,7 +4690,7 @@ static void
 recommend_man_page(int cmd, FILE *fp)
 {
 	const tchar *format_str;
-#ifdef __WIN32__
+#ifdef _WIN32
 	format_str = T("Some uncommon options are not listed;\n"
 		       "See %"TS".pdf in the doc directory for more details.\n");
 #else
@@ -4707,8 +4731,8 @@ usage_all(FILE *fp)
 	recommend_man_page(CMD_NONE, fp);
 }
 
-#ifdef __WIN32__
-extern int wmain(int argc, wchar_t **argv);
+#ifdef _WIN32
+int wmain(int argc, wchar_t **argv);
 #define main wmain
 #endif
 

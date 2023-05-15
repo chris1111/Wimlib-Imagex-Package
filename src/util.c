@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 2012-2016 Eric Biggers
+ * Copyright 2012-2023 Eric Biggers
  *
  * This file is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -43,7 +43,6 @@
 #include "wimlib/error.h"
 #include "wimlib/timestamp.h"
 #include "wimlib/util.h"
-#include "wimlib/xml.h"
 
 /*******************
  * Memory allocation
@@ -106,7 +105,7 @@ wimlib_strdup(const char *str)
 	return memdup(str, strlen(str) + 1);
 }
 
-#ifdef __WIN32__
+#ifdef _WIN32
 wchar_t *
 wimlib_wcsdup(const wchar_t *str)
 {
@@ -153,9 +152,6 @@ wimlib_set_memory_allocator(void *(*malloc_func)(size_t),
 	wimlib_malloc_func  = malloc_func  ? malloc_func  : malloc;
 	wimlib_free_func    = free_func    ? free_func    : free;
 	wimlib_realloc_func = realloc_func ? realloc_func : realloc;
-
-	xml_set_memory_allocator(wimlib_malloc_func, wimlib_free_func,
-				 wimlib_realloc_func);
 	return 0;
 }
 
@@ -174,7 +170,7 @@ void *mempcpy(void *dst, const void *src, size_t n)
  * Random number generation
  **************************/
 
-#ifndef __WIN32__
+#ifndef _WIN32
 /*
  * Generate @n cryptographically secure random bytes (thread-safe)
  *
@@ -186,7 +182,7 @@ get_random_bytes(void *p, size_t n)
 {
 	if (n == 0)
 		return;
-#ifdef HAVE_NR_GETRANDOM
+#ifdef __NR_getrandom
 	static bool getrandom_unavailable;
 
 	if (getrandom_unavailable)
@@ -211,7 +207,7 @@ get_random_bytes(void *p, size_t n)
 
 try_dev_urandom:
 	;
-#endif /* HAVE_NR_GETRANDOM */
+#endif /* __NR_getrandom */
 	int fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0) {
 		ERROR_WITH_ERRNO("Unable to open /dev/urandom");
@@ -231,7 +227,7 @@ try_dev_urandom:
 	} while (n != 0);
 	close(fd);
 }
-#endif /* !__WIN32__ */
+#endif /* !_WIN32 */
 
 /*
  * Generate @n cryptographically secure random alphanumeric characters
@@ -275,7 +271,7 @@ get_random_alnum_chars(tchar *p, size_t n)
  * System information
  ************************/
 
-#ifndef __WIN32__
+#ifndef _WIN32
 unsigned
 get_available_cpus(void)
 {
@@ -286,9 +282,9 @@ get_available_cpus(void)
 	}
 	return n;
 }
-#endif /* !__WIN32__ */
+#endif /* !_WIN32 */
 
-#ifndef __WIN32__
+#ifndef _WIN32
 u64
 get_available_memory(void)
 {
@@ -311,4 +307,4 @@ default_size:
 	WARNING("Failed to determine available memory; assuming 1 GiB");
 	return (u64)1 << 30;
 }
-#endif /* !__WIN32__ */
+#endif /* !_WIN32 */

@@ -22,7 +22,7 @@
  * details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this file; if not, see http://www.gnu.org/licenses/.
+ * along with this file; if not, see https://www.gnu.org/licenses/.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -132,7 +132,7 @@ clone_blob_descriptor(const struct blob_descriptor *old)
 		if (new->file_on_disk == NULL)
 			goto out_free;
 		break;
-#ifdef __WIN32__
+#ifdef _WIN32
 	case BLOB_IN_WINDOWS_FILE:
 		new->windows_file = clone_windows_file(old->windows_file);
 		break;
@@ -184,7 +184,7 @@ blob_release_location(struct blob_descriptor *blob)
 			      (void*)&blob->attached_buffer);
 		FREE(blob->file_on_disk);
 		break;
-#ifdef __WIN32__
+#ifdef _WIN32
 	case BLOB_IN_WINDOWS_FILE:
 		free_windows_file(blob->windows_file);
 		break;
@@ -462,7 +462,7 @@ cmp_blobs_by_sequential_order(const void *p1, const void *p2)
 		/* Compare files by path: just a heuristic that will place files
 		 * in the same directory next to each other.  */
 		return tstrcmp(blob1->file_on_disk, blob2->file_on_disk);
-#ifdef __WIN32__
+#ifdef _WIN32
 	case BLOB_IN_WINDOWS_FILE:
 		return cmp_windows_files(blob1->windows_file, blob2->windows_file);
 #endif
@@ -585,7 +585,7 @@ struct blob_descriptor_disk {
 	/* SHA-1 message digest of the uncompressed data of this blob, or all
 	 * zeroes if this blob is of zero length.  */
 	u8 hash[SHA1_HASH_SIZE];
-} _packed_attribute;
+} __attribute__((packed));
 
 /* Given a nonempty run of consecutive blob descriptors with the SOLID flag set,
  * count how many specify resources (as opposed to blobs within those
@@ -1236,7 +1236,7 @@ new_blob_from_data_buffer(const void *buffer, size_t size,
 	struct blob_descriptor *blob;
 	void *buffer_copy;
 
-	sha1_buffer(buffer, size, hash);
+	sha1(buffer, size, hash);
 
 	blob = lookup_blob(blob_table, hash);
 	if (blob)
@@ -1275,7 +1275,7 @@ after_blob_hashed(struct blob_descriptor *blob,
 		 * blob (from a stream) to point to the duplicate.  The caller
 		 * is responsible for freeing @blob if needed.  */
 		if (duplicate_blob->size != blob->size) {
-			tchar hash_str[SHA1_HASH_SIZE * 2 + 1];
+			tchar hash_str[SHA1_HASH_STRING_LEN];
 
 			sprint_hash(blob->hash, hash_str);
 			WARNING("SHA-1 collision at \"%"TS"\"\n"

@@ -3,9 +3,6 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
-/* Define to 1 if using SSSE3 implementation of SHA-1 */
-#undef ENABLE_SSSE3_SHA1
-
 /* Define to 1 to enable supporting code for tests */
 #undef ENABLE_TEST_SUPPORT
 
@@ -65,10 +62,6 @@
 
 /* Define to 1 if you have the `mempcpy' function. */
 #undef HAVE_MEMPCPY
-
-/* Define to 1 if the system headers define a system call number for
-   getrandom() */
-#undef HAVE_NR_GETRANDOM
 
 /* Define to 1 if you have the `openat' function. */
 #undef HAVE_OPENAT
@@ -186,9 +179,6 @@
 
 /* Define to 1 if using FUSE support */
 #undef WITH_FUSE
-
-/* Define to 1 if using libcrypto SHA-1 */
-#undef WITH_LIBCRYPTO
 
 /* Define to 1 if using NTFS-3G support */
 #undef WITH_NTFS_3G
