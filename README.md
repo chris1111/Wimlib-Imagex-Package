@@ -1,4 +1,4 @@
-# Wimlib-Imagex-Package
+# Wimlib-Imagex-Package in macOS
 
 <img width="128" alt="logo" src="https://user-images.githubusercontent.com/6248794/211173953-4df687de-26e9-40b8-9053-62be4f1a03f8.png">
 
