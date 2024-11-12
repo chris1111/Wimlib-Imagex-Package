@@ -4,9 +4,9 @@
 
 ## We use cross-platform Library wimlib to built it in macos.
 #### Important do not mix this program with that of Homebrew! Use Wimlib-Imagex-Package alone.
-The files in this repository are from the [Official wimlib site Release-v-1.14.1](https://wimlib.net/index.html)
+The files in this repository are from the [Official wimlib site Release-v-1.14.4](https://wimlib.net/index.html)
 
-- Wimlib-Imagex for macOS, working from macOS Mojave 10.14 to macOS Ventura 13
+- Wimlib-Imagex for macOS, working from macOS Mojave 10.14 to macOS Sequoia 15
 - Working for Hackintosh and real Mac
 - This program will built then install wimlib in `/usr/local/`
 
@@ -29,18 +29,14 @@ Usage ➤ [Usage: wimlib-imagex](https://github.com/chris1111/Wimlib-Imagex-Pack
 
 - [x] `Installation`
 ```bash
-mkdir -p WimlibDev
-cd WimlibDev
-git clone https://github.com/chris1111/Wimlib-Imagex-Package.git
-./Wimlib-Imagex-Package/Build-Package.tool
+mkdir -p WimlibDev && cd WimlibDev && git clone https://github.com/chris1111/Wimlib-Imagex-Package.git && ./Wimlib-Imagex-Package/Build-Package.tool
 ```
 See Video Demonstartion ➤ [![Modular Image Creation](https://user-images.githubusercontent.com/6248794/211171949-884b17a1-8edc-435d-a2b0-272334068365.png)](https://github.com/chris1111/Wimlib-Imagex-Package/blob/main/Video%20Page.md)
   
 ### Credit: 
 - Special thanks to ➤ [Wimlib](https://wimlib.net/) for Wimlib
-- Special thanks to ➤ [Homebrew](https://github.com/homebrew) for the build: libxml2, openssl@3 Library
 - Special thanks to ➤ [Tester djams](https://github.com/djams2904)
-- Apple for the Command Line Tools (CLT)
+- Apple for the Command Line Tools (CLT) and Xcode
 
 ### SIP Security and Gatekeeper must be disable
 - WINUSB is bootable only in UEFI ( 🚫  Not working in Legacy booting )
