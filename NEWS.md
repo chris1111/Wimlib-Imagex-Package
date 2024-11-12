@@ -1,5 +1,38 @@
 # wimlib release notes
 
+## Version 1.14.4
+
+- Fixed potential crash when writing WIM XML data, introduced in v1.14.0.
+
+- Improved some documentation.
+
+- Fixed the Windows build script to avoid an unnecessary DLL dependency when
+  building with MSYS2 MINGW32 or MSYS2 MINGW64.
+
+## Version 1.14.3
+
+- Fixed a bug introduced in v1.14.0 where non-ASCII characters stopped being
+  accepted in image names and descriptions.  This bug only affected UNIX-like
+  systems that use `signed char`, e.g. x86 Linux systems.
+
+## Version 1.14.2
+
+- Fixed a bug introduced in v1.14.0 where a crash would sometimes occur if a
+  Delphi application or Visual Studio compiled application called into the
+  32-bit x86 build of the library.
+
+- Fixed an issue where some WIM images written by wimlib weren't accepted by
+  some MS software versions.  wimlib-written WIM images containing directory
+  reparse points (e.g. junctions) weren't accepted by some versions of the
+  Windows 8 setup wizard.  Also, recent versions of DISM had stopped accepting
+  wimlib-written WIM images containing directories with named data streams.
+
+- Commands passed to wimupdate on standard input are now interpreted as UTF-8 or
+  UTF-16LE (autodetected), just like wimcapture config files and wimextract path
+  list files.  Previously, on Windows the Windows code page was used instead of
+  UTF-8, which made it hard to specify non-ASCII file paths in wimupdate
+  commands.  The same change also applies to wimcapture source list files.
+
 ## Version 1.14.1
 
 - Fixed a bug introduced in v1.14.0 where wimlib would crash on older CPUs.

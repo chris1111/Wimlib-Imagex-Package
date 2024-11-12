@@ -11,7 +11,7 @@
 /**
  * @mainpage
  *
- * This is the documentation for the library interface of wimlib 1.14.1, a C
+ * This is the documentation for the library interface of wimlib 1.14.4, a C
  * library for creating, modifying, extracting, and mounting files in the
  * Windows Imaging (WIM) format.  This documentation is intended for developers
  * only.  If you have installed wimlib and want to know how to use the @b
@@ -401,10 +401,23 @@
 #include <time.h>
 
 #ifdef BUILDING_WIMLIB
-#  ifdef _WIN32
-#    define WIMLIBAPI __declspec(dllexport)
+  /*
+   * On i386, gcc assumes that the stack is 16-byte aligned at function entry.
+   * However, some compilers (e.g. MSVC) and programming languages (e.g. Delphi)
+   * only guarantee 4-byte alignment when calling functions.  This is mainly an
+   * issue on Windows, but it can occur on Linux too.  Work around this ABI
+   * incompatibility by realigning the stack pointer when entering the library.
+   * This prevents crashes in SSE/AVX code.
+   */
+#  if defined(__GNUC__) && defined(__i386__)
+#    define WIMLIB_ALIGN_STACK  __attribute__((force_align_arg_pointer))
 #  else
-#    define WIMLIBAPI __attribute__((visibility("default")))
+#    define WIMLIB_ALIGN_STACK
+#  endif
+#  ifdef _WIN32
+#    define WIMLIBAPI __declspec(dllexport) WIMLIB_ALIGN_STACK
+#  else
+#    define WIMLIBAPI __attribute__((visibility("default"))) WIMLIB_ALIGN_STACK
 #  endif
 #else
 #  define WIMLIBAPI
@@ -420,7 +433,7 @@
 #define WIMLIB_MINOR_VERSION 14
 
 /** Patch version of the library (for example, the 5 in 1.2.5). */
-#define WIMLIB_PATCH_VERSION 1
+#define WIMLIB_PATCH_VERSION 4
 
 #ifdef __cplusplus
 extern "C" {
@@ -3551,6 +3564,24 @@ wimlib_join_with_progress(const wimlib_tchar * const *swms,
 			  wimlib_progress_func_t progfunc,
 			  void *progctx);
 
+/**
+ * @ingroup G_general
+ *
+ * Load a UTF-8 or UTF-16LE encoded text file into memory.
+ *
+ * @param path
+ *	The path to the file, or NULL or "-" to use standard input.
+ * @param tstr_ret
+ *	On success, a buffer containing the file's text as a "wimlib_tchar"
+ *	string is returned here.  The buffer must be freed using free().
+ * @param tstr_nchars_ret
+ *	On success, the length of the text in "wimlib_tchar"s is returned here.
+ *
+ * @return 0 on success; a ::wimlib_error_code value on failure.
+ */
+WIMLIBAPI int
+wimlib_load_text_file(const wimlib_tchar *path,
+		      wimlib_tchar **tstr_ret, size_t *tstr_nchars_ret);
 
 /**
  * @ingroup G_mounting_wim_images

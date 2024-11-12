@@ -3,7 +3,6 @@
 # By chris1111
 # Copyright (c) 2022, chris1111. All Right Reserved
 # Credit: wimlib https://wimlib.net/ 
-# Credit: Homebrew https://github.com/homebrew
 # Vars
 dir="$HOME/WimlibDev/Wimlib-Imagex-Package"
 install_log="$HOME/WimlibDev/Wimlib-Imagex-Package/Build-Package.txt"
@@ -27,9 +26,9 @@ response=$(osascript -e 'tell app "System Events" to display dialog "
 Welcome Wimlib-Imagex-Package
 You are about to install
 
-/usr/local/etc/libxml2, openssl@3
-/usr/local/Cellar/wimlib, libxml2, openssl@3
+/usr/local/lib/wimlib
 /usr/local/bin/wimlib-imagex
+/usr/local/share/man/man1
 
 Please make a choice\nCancel for Exit" buttons {"Cancel", "Wimlib-Imagex-Package"} default button 2 with title "'"$apptitle"' '"$version"'" with icon POSIX file "'"$iconfile"'"  ')
 
@@ -58,31 +57,14 @@ Sleep 2
     echo " "
     echo "Prepare --> Install wimlib"
     Sleep 1
-    echo "⬇︎ Type your password to continue"
-    sudo mkdir -p /usr/local/bin
-    sudo mkdir -p /usr/local/opt
-    sudo mkdir -p /usr/local/etc
-    hdiutil attach -noverify -nobrowse ./Library-wimlib.dmg
-    echo "Attach Image"
-    sudo cp -Rp /Volumes/Library-wimlib/wimlib/usr/* /usr/
-    Sleep 3
-    export LIBXML2_CFLAGS="-L/usr/local/Cellar/libxml2/2.10.3_1/lib"
-    export LIBXML2_LIBS="/usr/local/Cellar/libxml2/2.10.3_1/include" 
-    export OPENSSL_CFLAGS="-L/usr/local/Cellar/openssl@3/3.0.7/lib"
-    export OPENSSL_LIBS="/usr/local/Cellar/openssl@3/3.0.7/include"
-    export PKG_CONFIG_PATH=/usr/local/Cellat/wimlib/1.14.1/lib
-    ./configure --prefix=/usr/local CC=$CC --without-ntfs-3g --without-fuse --prefix=/usr/local/Cellar/wimlib/1.14.1
+    ./configure --without-ntfs-3g --without-fuse
     make
+    echo "⬇︎ Type your password to continue"
     sudo make install
-    ln -s /usr/local/Cellar/wimlib/1.14.1 /usr/local/opt/wimlib
-    ln -s /usr/local/Cellar/wimlib/1.14.1/include/wimlib.h /usr/local/include
-    ln -s /usr/local/Cellar/libxml2/2.10.3_1 /usr/local/opt/libxml2
-    ln -s /usr/local/Cellar/openssl@3/3.0.7 /usr/local/opt/openssl@3
-    ln -s /usr/local/Cellar/openssl@3/3.0.7 /usr/local/opt/openssl
-    sudo ln -s /usr/local/Cellar/wimlib/1.14.1/bin/* /usr/local/bin
-    sudo cp -Rp /usr/local/Cellar/wimlib/1.14.1/share/man /usr/local/share/
-    echo $PKG_CONFIG_PATH
-    Umount -f /Volumes/Library-wimlib
+    echo "============================================="
+    wimlib-imagex --version
+    echo "============================================="
+    echo " "
     echo "=============================================" 
     echo "Your path --> /usr/local/bin ➤ wimlib-imagex" 
     echo "=============================================" 

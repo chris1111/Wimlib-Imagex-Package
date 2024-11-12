@@ -21,22 +21,22 @@
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
 
-/* Define to 1 if you have the `fdopendir' function. */
+/* Define to 1 if you have the 'fdopendir' function. */
 #undef HAVE_FDOPENDIR
 
-/* Define to 1 if you have the `flock' function. */
+/* Define to 1 if you have the 'flock' function. */
 #undef HAVE_FLOCK
 
-/* Define to 1 if you have the `fsetxattr' function. */
+/* Define to 1 if you have the 'fsetxattr' function. */
 #undef HAVE_FSETXATTR
 
-/* Define to 1 if you have the `fstatat' function. */
+/* Define to 1 if you have the 'fstatat' function. */
 #undef HAVE_FSTATAT
 
-/* Define to 1 if you have the `futimens' function. */
+/* Define to 1 if you have the 'futimens' function. */
 #undef HAVE_FUTIMENS
 
-/* Define to 1 if you have the `getopt_long_only' function. */
+/* Define to 1 if you have the 'getopt_long_only' function. */
 #undef HAVE_GETOPT_LONG_ONLY
 
 /* Define to 1 if you have the <glob.h> header file. */
@@ -45,28 +45,28 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `lgetxattr' function. */
+/* Define to 1 if you have the 'lgetxattr' function. */
 #undef HAVE_LGETXATTR
 
-/* Define to 1 if you have the `rt' library (-lrt). */
+/* Define to 1 if you have the 'rt' library (-lrt). */
 #undef HAVE_LIBRT
 
-/* Define to 1 if you have the `llistxattr' function. */
+/* Define to 1 if you have the 'llistxattr' function. */
 #undef HAVE_LLISTXATTR
 
-/* Define to 1 if you have the `lsetxattr' function. */
+/* Define to 1 if you have the 'lsetxattr' function. */
 #undef HAVE_LSETXATTR
 
 /* Define to 1 if you have the <machine/endian.h> header file. */
 #undef HAVE_MACHINE_ENDIAN_H
 
-/* Define to 1 if you have the `mempcpy' function. */
+/* Define to 1 if you have the 'mempcpy' function. */
 #undef HAVE_MEMPCPY
 
-/* Define to 1 if you have the `openat' function. */
+/* Define to 1 if you have the 'openat' function. */
 #undef HAVE_OPENAT
 
-/* Define to 1 if you have the `posix_fallocate' function. */
+/* Define to 1 if you have the 'posix_fallocate' function. */
 #undef HAVE_POSIX_FALLOCATE
 
 /* Define if you have POSIX threads libraries and header files. */
@@ -75,7 +75,7 @@
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
 
-/* Define to 1 if you have the `readlinkat' function. */
+/* Define to 1 if you have the 'readlinkat' function. */
 #undef HAVE_READLINKAT
 
 /* Define to 1 if stat() supports nanosecond precision timestamps */
@@ -135,7 +135,7 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if you have the `utimensat' function. */
+/* Define to 1 if you have the 'utimensat' function. */
 #undef HAVE_UTIMENSAT
 
 /* Define to 1 if you have the <utime.h> header file. */
@@ -169,7 +169,7 @@
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
