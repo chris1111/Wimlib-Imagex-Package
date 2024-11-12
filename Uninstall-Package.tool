@@ -27,13 +27,8 @@ You are about to Uninstall
 
 /usr/local/bin/ ➤ mkwinpeimg, wimappend, wimapply, wimcapture, wimdelete, wimdir, wimexport, wimextract, wiminfo, wimjoin, wimlib-imagex, wimmount, wimmountrw, wimoptimize, wimunmount, wimupdate, wimverify
 
-/usr/local/share/man/ ➤ man1, man3
-/usr/local/etc/ ➤ libxml2, openssl@3
-
-/usr/local/opt/ ➤ libxml2, wimlib, openssl@3, openssl
-
-/usr/local/Cellar/ ➤ libxml2, wimlib, openssl@3, openssl
-
+/usr/local/share/man/ ➤ man1
+/usr/local/lib/ ➤ libwim.15.dylib, libwim.dylib, libwim.la, pkgconfig
 /usr/local/include/ ➤ wimlib.h
 
 $HOME/WimlibDev
@@ -74,16 +69,12 @@ sudo rm -rf /usr/local/bin/wimunmount
 sudo rm -rf /usr/local/bin/wimupdate
 sudo rm -rf /usr/local/bin/wimverify
 sudo rm -rf /usr/local/share/man/man1/*
-sudo rm -rf /usr/local/share/man/man3/*
-sudo rm -rf /usr/local/etc/libxml2
-sudo rm -rf /usr/local/etc/openssl@3
-sudo rm -rf /usr/local/opt/libxml2
-sudo rm -rf /usr/local/opt/wimlib
-sudo rm -rf /usr/local/opt/openssl@3
-sudo rm -rf /usr/local/opt/openssl
+sudo rm -rf /usr/local/lib/libwim.15.dylib
+sudo rm -rf /usr/local/lib/libwim.a
+sudo rm -rf /usr/local/lib/libwim.dylib
+sudo rm -rf /usr/local/lib/libwim.la
+sudo rm -rf /usr/local/lib/pkgconfig
 sudo rm -rf /usr/local/include/wimlib.h
-sudo rm -rf /usr/local/Cellar
-
 echo "=============================================" 
 echo "↓ Uninstall
 
@@ -101,19 +92,16 @@ echo "↓ Uninstall
 /usr/local/bin/wimmount
 /usr/local/bin/wimmountrw
 /usr/local/bin/wimoptimize
+/usr/local/bin/wimsplit
 /usr/local/bin/wimunmount
 /usr/local/bin/wimupdate
 /usr/local/bin/wimverify
-/usr/local/share/man/man1/*
-/usr/local/share/man/man3/*
-/usr/local/etc/libxml2
-/usr/local/etc/openssl@3
-/usr/local/opt/libxml2
-/usr/local/opt/wimlib
-/usr/local/opt/openssl@3
-/usr/local/opt/openssl
+/usr/local/lib/libwim.15.dylib
+/usr/local/lib/libwim.a
+/usr/local/lib/libwim.dylib
+/usr/local/lib/libwim.la
+/usr/local/lib/pkgconfig
 /usr/local/include/wimlib.h
-/usr/local/Cellar
 $HOME/WimlibDev
 " 
 echo "=============================================" 
